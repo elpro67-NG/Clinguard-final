@@ -48,6 +48,10 @@
                     aria-hidden="true"></i><span>Reportes</span></a>
             <a class="nb" th:href="@{/recepcion/reportes}" sec:authorize="hasRole('RECEPCIONISTA')"><i
                     class="bx bx-file" aria-hidden="true"></i><span>Reportes de recepción</span></a>
+            <!-- Registrar usuario: visible solo para administradores -->
+            <a class="nb" th:href="@{/admin/usuarios/nuevo}" sec:authorize="hasRole('ADMIN')">
+                <i class="bx bx-user-plus" aria-hidden="true"></i><span>Registrar usuario</span>
+            </a>
             <a class="nb" th:href="@{/notificaciones}"
                 sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO','USUARIO')"><i class="bx bx-bell"
                     aria-hidden="true"></i><span>Notificaciones</span></a>

@@ -145,7 +145,11 @@
             </a>
 
 
-            <!-- ADMIN -->
+            <!-- ADMIN: REGISTRAR USUARIO (SOLO ADMINISTRADOR) -->
+            <a class="nb" th:href="@{/admin/usuarios/nuevo}" sec:authorize="hasRole('ADMIN')">
+                <i class="bx bx-user-plus"></i>
+                <span>Registrar usuario</span>
+            </a>
             
 
 

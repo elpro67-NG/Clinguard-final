@@ -1977,7 +1977,7 @@ a {
   width: 170px;
   height: 170px;
   border-radius: 50%;
-  background: conic-gradient(var(--accent) 0 82%, var(--suggest) 82% 94%, var(--border) 94% 100%);
+  background: conic-gradient(#14E4C3 0 82%, #D946EF 82% 94%, #9B5DE5 94% 100%);
   display: grid;
   place-items: center;
   position: relative;
@@ -19216,4 +19216,106 @@ body.cg-view-cita-form .appointment-form .card-toolbar p { line-height: 1.5; }
   body.cg-view-cita-form .appointment-form .cg-inline-cita-form-6 {
     grid-template-columns: minmax(0,1fr);
   }
+}
+
+/* ClinGuard: nueva paleta para indicadores circulares de Análisis */
+.analysis-donut-layout .legend-primary { background: #14E4C3; }
+.analysis-donut-layout .legend-secondary { background: #D946EF; }
+.analysis-donut-layout .legend-muted { background: #9B5DE5; }
+
+
+/* CLINGUARD: colores de los tres estados de citas */
+:root {
+  --cita-programada: #12DCC5;
+  --cita-confirmada: #A78BFA;
+  --cita-reprogramada: #D946EF;
+}
+body.cg-view-citas .cg-citas-status--programada,
+.cita-status-programada {
+  color: var(--cita-programada);
+  background: rgba(18, 220, 197, .13);
+}
+body.cg-view-citas .cg-citas-status--confirmada,
+.cita-status-confirmada {
+  color: var(--cita-confirmada);
+  background: rgba(167, 139, 250, .15);
+}
+body.cg-view-citas .cg-citas-status--reprogramada,
+.cita-status-reprogramada {
+  color: var(--cita-reprogramada);
+  background: rgba(217, 70, 239, .14);
+}
+.cita-status-programada .cita-status-dot { background: var(--cita-programada); }
+.cita-status-confirmada .cita-status-dot { background: var(--cita-confirmada); }
+.cita-status-reprogramada .cita-status-dot { background: var(--cita-reprogramada); }
+
+
+/* ClinGuard: ajuste visual del detalle del paciente.
+   Solo afecta a la vista body.cg-view-paciente-detalle. */
+body.cg-view-paciente-detalle .cg-pd-main {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 3vw, 36px) 40px;
+}
+body.cg-view-paciente-detalle .cg-pd-layout {display:flex;flex-direction:column;gap:18px;}
+body.cg-view-paciente-detalle .cg-pd-hero {
+  display:flex;justify-content:space-between;align-items:center;gap:24px;
+  padding:22px 26px;min-height:132px;
+  border:1px solid var(--border,#355865);border-radius:14px;
+  background:var(--bg2,#15313a);
+}
+body.cg-view-paciente-detalle .cg-pd-hero-left {display:flex;align-items:center;gap:18px;min-width:0;}
+body.cg-view-paciente-detalle .cg-pd-patient-avatar {
+  width:58px;height:58px;flex:0 0 58px;border-radius:14px;
+  display:grid;place-items:center;font-size:27px;
+  color:var(--accent,#37c9de);background:var(--accent-dim,rgba(55,201,222,.12));
+}
+body.cg-view-paciente-detalle .cg-pd-hero-info {min-width:0;}
+body.cg-view-paciente-detalle .cg-pd-hero h1 {font-size:clamp(20px,2vw,27px);line-height:1.25;margin:0 0 6px;}
+body.cg-view-paciente-detalle .cg-pd-hero-meta {display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+body.cg-view-paciente-detalle .cg-pd-hero :is(.cg-pd-edit,.patient-detail-actions) {display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+body.cg-view-paciente-detalle .cg-pd-panel {
+  padding:22px 26px;margin:0;border-radius:14px;
+  border:1px solid var(--border,#355865);
+}
+body.cg-view-paciente-detalle .cg-pd-section-head {
+  display:flex;align-items:center;gap:14px;padding-bottom:14px;margin-bottom:16px;
+  border-bottom:1px solid var(--border,#355865);
+}
+body.cg-view-paciente-detalle .cg-pd-section-head--split {justify-content:space-between;}
+body.cg-view-paciente-detalle .cg-pd-head-group {display:flex;align-items:center;gap:12px;min-width:0;}
+body.cg-view-paciente-detalle .cg-pd-section-icon {width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;}
+body.cg-view-paciente-detalle .cg-pd-data,
+body.cg-view-paciente-detalle .cg-pd-data--clinical {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 0;
+}
+body.cg-view-paciente-detalle .cg-pd-data--contact {grid-template-columns:repeat(3,minmax(0,1fr));}
+body.cg-view-paciente-detalle .cg-pd-data > div {min-width:0;padding:14px;min-height:72px;}
+body.cg-view-paciente-detalle .cg-pd-data dt {font-size:12px;margin:0 0 6px;}
+body.cg-view-paciente-detalle .cg-pd-data dd {margin:0;font-size:14px;overflow-wrap:anywhere;}
+body.cg-view-paciente-detalle :is(input[type="text"],input[type="search"],input:not([type]),select) {
+  min-height:44px;
+}
+/* Formulario de vinculación: etiquetas y verificación bien alineadas */
+body.cg-view-paciente-detalle input[type="checkbox"] {
+  width:17px;height:17px;min-height:0;flex:0 0 17px;accent-color:var(--accent,#37c9de);
+  vertical-align:middle;
+}
+body.cg-view-paciente-detalle form label {line-height:1.45;}
+body.cg-view-paciente-detalle .cg-pd-weight-form {gap:14px;}
+@media(max-width:1050px) {
+ body.cg-view-paciente-detalle .cg-pd-data,
+ body.cg-view-paciente-detalle .cg-pd-data--clinical,
+ body.cg-view-paciente-detalle .cg-pd-data--contact {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:650px) {
+ body.cg-view-paciente-detalle .cg-pd-main {padding:16px 12px 28px;}
+ body.cg-view-paciente-detalle .cg-pd-hero {flex-direction:column;align-items:stretch;padding:18px;}
+ body.cg-view-paciente-detalle .cg-pd-hero-left {align-items:flex-start;}
+ body.cg-view-paciente-detalle .cg-pd-panel {padding:18px;}
+ body.cg-view-paciente-detalle .cg-pd-section-head--split {align-items:flex-start;flex-direction:column;}
+ body.cg-view-paciente-detalle .cg-pd-data,
+ body.cg-view-paciente-detalle .cg-pd-data--clinical,
+ body.cg-view-paciente-detalle .cg-pd-data--contact {grid-template-columns:1fr;}
 }

@@ -13,6 +13,68 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script th:src="@{/js/theme.js}" defer></script>
 
+    <link rel="icon" type="image/png" th:href="@{/img/favicon-clinguard.png}" href="/img/favicon-clinguard.png">
+
+
+    <!-- Tamaño equilibrado de los dos gráficos principales -->
+    <style>
+      body.cg-view-analisis .analisis-grid {
+        align-items: stretch;
+      }
+      body.cg-view-analisis .analisis-grid > .card {
+        min-width: 0;
+        min-height: 0;
+      }
+      /* Primera fila: ambas tarjetas a la misma altura, sin espacio sobrante */
+      body.cg-view-analisis .analisis-grid-principal > .card {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 0;
+      }
+      body.cg-view-analisis .analisis-grid-principal .analisis-chart {
+        position: relative;
+        box-sizing: border-box;
+        flex: 0 0 300px;
+        width: 100%;
+        height: 300px !important;
+        min-height: 0 !important;
+        max-height: 300px !important;
+        overflow: hidden;
+        margin-top: 12px;
+      }
+      body.cg-view-analisis .analisis-grid-principal .analisis-chart canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+      }
+      /* Segunda fila: barras con altura contenida */
+      body.cg-view-analisis .analisis-grid:not(.analisis-grid-principal) .analisis-chart {
+        position: relative;
+        height: 280px !important;
+        min-height: 0 !important;
+        max-height: 280px !important;
+        overflow: hidden;
+      }
+      body.cg-view-analisis .analisis-grid:not(.analisis-grid-principal) .analisis-chart canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+      }
+      @media (max-width: 600px) {
+        body.cg-view-analisis .analisis-grid-principal .analisis-chart {
+          flex-basis: 250px;
+          height: 250px !important;
+          max-height: 250px !important;
+        }
+        body.cg-view-analisis .analisis-grid:not(.analisis-grid-principal) .analisis-chart {
+          height: 240px !important;
+          max-height: 240px !important;
+        }
+      }
+    </style>
 
 </head>
 
@@ -168,7 +230,7 @@
                 </div>
 
                 <!-- PRIMERA FILA DE GRÁFICAS -->
-                <div class="analisis-grid">
+                <div class="analisis-grid analisis-grid-principal">
                     <div class="card">
                         <div class="card-toolbar">
                             <div>
@@ -516,9 +578,12 @@
             const etiquetasEstados = Object.keys(estados);
             const valoresEstados = Object.values(estados).map(numero);
             const coloresEstados = etiquetasEstados.map(estado => {
-                const clave = String(estado).toUpperCase().trim();
-                if (clave.includes("PROGRAM") || clave.includes("PENDIENT")) return "#f59e0b";
-                if (clave.includes("CONFIRM")) return "#3b82f6";
+                const clave = String(estado).normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+                // REPROGRAMADA debe comprobarse primero: también contiene "PROGRAM".
+                if (clave.includes("REPROGRAM")) return "#D946EF"; // Magenta
+                if (clave.includes("PROGRAM") || clave.includes("PENDIENT")) return "#12DCC5"; // Turquesa
+                if (clave.includes("CONFIRM")) return "#A78BFA"; // Morado
                 if (clave.includes("ATEND") || clave.includes("COMPLET") || clave.includes("FINALIZ")) return "#10b981";
                 if (clave.includes("CANCEL")) return "#ef4444";
                 return "#64748b";

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClinGuard — Citas médicas</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css(v=20261118-citas-menu-fix)}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script th:src="@{/js/theme.js}"></script>
+</head>
+
+<body data-page="citas" class="cg-view-citas">
+    <aside id="sidebar">
+        <div class="sb-brand">
+            <div class="sb-logo"><img th:src="@{/img/logo-claro.png}" alt="ClinGuard"
+                    class="clinguard-logo logo-claro"><img th:src="@{/img/logo-oscuro.png}" alt="ClinGuard"
+                    class="clinguard-logo logo-oscuro"></div>
+        </div>
+        <nav class="sb-nav" aria-label="Navegación principal">
+            <a class="nb" th:href="@{/admin}" sec:authorize="hasRole('ADMIN')"><i class="bx bx-shield-quarter"
+                    aria-hidden="true"></i><span>Panel Admin</span></a>
+
+            <a class="nb" th:href="@{/dashboard}" sec:authorize="!hasRole('ADMIN')"><i class="bx bx-grid-alt"
+                    aria-hidden="true"></i><span>Dashboard</span></a>
+
+            <a class="nb" th:href="@{/analisis}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i
+                    class="bx bx-line-chart" aria-hidden="true"></i><span>Análisis</span></a>
+            <a class="nb" th:href="@{/conversiones}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i
+                    class="bx bx-transfer" aria-hidden="true"></i><span>Conversiones médicas</span></a>
+            <a class="nb" th:href="@{/pacientes}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i
+                    class="bx bx-user" aria-hidden="true"></i><span>Pacientes</span></a>
+            <a class="nb" th:href="@{/recepcion/pacientes}" sec:authorize="hasRole('RECEPCIONISTA')"><i
+                    class="bx bx-user" aria-hidden="true"></i><span>Pacientes</span></a>
+            <a class="nb active" th:href="@{/citas}" aria-current="page"><i class="bx bx-calendar"
+                    aria-hidden="true"></i><span>Citas médicas</span></a>
+            <a class="nb" th:href="@{/recepcion/agenda}" sec:authorize="hasRole('RECEPCIONISTA')"><i
+                    class="bx bx-calendar-check" aria-hidden="true"></i><span>Agenda médica</span></a>
+            <a class="nb" th:href="@{/recepcion/analisis}" sec:authorize="hasRole('RECEPCIONISTA')"><i
+                    class="bx bx-bar-chart-alt-2" aria-hidden="true"></i><span>Análisis de recepción</span></a>
+            <a class="nb" th:href="@{/historial}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO','USUARIO')"><i
+                    class="bx bx-notepad" aria-hidden="true"></i><span>Historial médico</span></a>
+            <a class="nb" th:href="@{/medicamentos}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i
+                    class="bx bx-capsule" aria-hidden="true"></i><span>Medicamentos</span></a>
+            <a class="nb" th:href="@{/reportes}" sec:authorize="hasAnyRole('ADMIN','MEDICO')"><i class="bx bx-file"
+                    aria-hidden="true"></i><span>Reportes</span></a>
+            <a class="nb" th:href="@{/recepcion/reportes}" sec:authorize="hasRole('RECEPCIONISTA')"><i
+                    class="bx bx-file" aria-hidden="true"></i><span>Reportes de recepción</span></a>
+            <a class="nb" th:href="@{/notificaciones}"
+                sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO','USUARIO')"><i class="bx bx-bell"
+                    aria-hidden="true"></i><span>Notificaciones</span></a>
+            <a class="nb" th:href="@{/recepcion/notificaciones}" sec:authorize="hasRole('RECEPCIONISTA')"><i
+                    class="bx bx-bell" aria-hidden="true"></i><span>Notificaciones</span></a>
+            <a class="nb" th:href="@{/perfil}"><i class="bx bx-user-circle" aria-hidden="true"></i><span>Mi
+                    perfil</span></a>
+        </nav>
+        <a class="sb-user sb-user-clickable" th:href="@{/perfil}">
+            <div class="avatar"><i class="bx bx-user"></i></div>
+            <div class="u-info">
+                <div class="u-nm" th:text="${username}">Usuario</div>
+                <div class="u-rl" sec:authorize="hasRole('ADMIN')">Administrador</div>
+                <div class="u-rl" sec:authorize="hasRole('MEDICO')">Médico</div>
+                <div class="u-rl" sec:authorize="hasRole('ENFERMERO')">Enfermero</div>
+                <div class="u-rl" sec:authorize="hasRole('RECEPCIONISTA')">Recepcionista</div>
+                <div class="u-rl" sec:authorize="hasRole('USUARIO')">Usuario</div>
+            </div>
+        </a>
+        <form class="cg-sidebar-logout-form" th:action="@{/logout}" method="post"><input type="hidden"
+                th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button type="submit"
+                class="logout-link cg-sidebar-logout-btn"><i class="bx bx-log-out"></i> Salir</button></form>
+    </aside>
+    <main id="main-content">
+        <button type="button" class="cg-citas-menu-toggle" aria-label="Abrir menú" aria-controls="sidebar"
+            aria-expanded="false"><i class="bx bx-menu"></i> Menú</button>
+        <header>
+            <div class="h-title">Citas médicas</div>
+        </header>
+        <div class="main-inner">
+            <div class="page active">
+                <div th:if="${exito}" class="cita-alert cita-alert-success" role="status" th:text="${exito}"></div>
+                <div th:if="${error}" class="cita-alert cita-alert-error" role="alert" th:text="${error}"></div>
+                <section class="card cg-citas-toolbar">
+                    <div>
+                        <h1 class="section-title-compact">Gestión de citas</h1>
+                        <p class="muted-text-sm"
+                            th:text="${esUsuario} ? 'Consulta tus citas médicas.' : 'Consulta, filtra y administra las citas asignadas.'">
+                            Consulta tus citas médicas.</p>
+                    </div>
+                    <a class="btn-primary" th:if="${puedeCrear}" th:href="@{/citas/nueva}"><i class="bx bx-plus"></i>
+                        Nueva cita</a>
+                </section>
+                <section class="card cg-citas-listado" aria-label="Listado de citas">
+                    <div class="cg-citas-filters">
+                        <label class="cg-citas-search"><i class="bx bx-search"></i><input type="search" id="buscarCitas"
+                                placeholder="Buscar paciente, motivo o médico" aria-label="Buscar citas"></label>
+                        <label class="cg-citas-filter-label">Estado <select id="estadoFiltro">
+                                <option value="">Todos</option>
+                                <option value="PROGRAMADA">Programada</option>
+                                <option value="PENDIENTE">Pendiente</option>
+                                <option value="CONFIRMADA">Confirmada</option>
+                                <option value="EN_CURSO">En curso</option>
+                                <option value="ATENDIDA">Atendida</option>
+                                <option value="COMPLETADA">Completada</option>
+                                <option value="CANCELADA">Cancelada</option>
+                                <option value="REPROGRAMADA">Reprogramada</option>
+                            </select></label>
+                        <span class="cg-citas-count" id="contadorCitas" aria-live="polite"></span>
+                    </div>
+                    <div class="table-container">
+                        <table class="cg-citas-table">
+                            <thead>
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Motivo</th>
+                                    <th>Médico</th>
+                                    <th>Estado</th>
+                                    <th th:if="${!esUsuario}">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filasCitas">
+                                <tr th:each="cita : ${citas}" class="cg-cita-row" th:attr="data-estado=${cita.estado}">
+                                    <td><strong
+                                            th:text="${mapaPacientes.get(cita.pacienteId) != null ? mapaPacientes.get(cita.pacienteId) : (cita.usuarioUsername != null ? cita.usuarioUsername : 'Paciente no registrado')}">Paciente</strong>
+                                    </td>
+                                    <td th:text="${cita.fecha}">2026-11-16</td>
+                                    <td th:text="${cita.hora}">09:00</td>
+                                    <td
+                                        th:text="${cita.motivo != null and !cita.motivo.isBlank() ? cita.motivo : 'Sin motivo registrado'}">
+                                        Consulta</td>
+                                    <td th:text="${cita.medicoUsername != null ? cita.medicoUsername : 'Sin asignar'}">
+                                        Médico</td>
+                                    <td><span class="cg-citas-status"
+                                            th:classappend="${cita.estado != null ? ' cg-citas-status--' + #strings.toLowerCase(cita.estado) : ''}"
+                                            th:text="${cita.estado != null ? cita.estado : 'SIN ESTADO'}">Estado</span>
+                                    </td>
+                                    <td th:if="${!esUsuario}">
+                                        <div class="actions cg-citas-actions">
+                                            <a th:if="${esAdmin or esRecepcionista or (esMedico and cita.medicoUsername == username) or (esEnfermero and cita.enfermeroUsername == username)}"
+                                                class="act-btn" th:href="@{/citas/editar/{id}(id=${cita.id})}"
+                                                title="Editar cita" aria-label="Editar cita"><i
+                                                    class="bx bx-edit-alt"></i></a>
+                                            <form th:if="${esAdmin}" th:action="@{/citas/eliminar/{id}(id=${cita.id})}"
+                                                method="post"
+                                                onsubmit="return confirm('¿Eliminar permanentemente esta cita?');">
+                                                <button type="submit" class="act-btn cg-citas-delete"
+                                                    title="Eliminar cita" aria-label="Eliminar cita"><i
+                                                        class="bx bx-trash"></i></button></form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(citas)}">
+                                    <td th:colspan="${esUsuario ? 6 : 7}" class="cg-citas-empty"><span
+                                            th:if="${esAdmin}">No hay citas disponibles. Verifica los registros de la
+                                            colección de citas y la base de datos conectada.</span><span
+                                            th:unless="${esAdmin}">No hay citas registradas o asignadas a tu
+                                            cuenta.</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="citasSinFiltro" class="cg-citas-empty" hidden>No se encontraron citas con estos filtros.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const busqueda = document.getElementById('buscarCitas');
+            const estado = document.getElementById('estadoFiltro');
+            const filas = [...document.querySelectorAll('.cg-cita-row')];
+            const contador = document.getElementById('contadorCitas');
+            const vacio = document.getElementById('citasSinFiltro');
+            const normalizar = texto => (texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            function filtrar() {
+                const q = normalizar(busqueda.value.trim());
+                const e = estado.value;
+                let visibles = 0;
+                filas.forEach(fila => {
+                    const mostrar = normalizar(fila.textContent).includes(q) && (!e || fila.dataset.estado === e);
+                    fila.hidden = !mostrar;
+                    if (mostrar) visibles++;
+                });
+                contador.textContent = visibles + ' de ' + filas.length + ' citas';
+                vacio.hidden = visibles !== 0 || filas.length === 0;
+            }
+            busqueda.addEventListener('input', filtrar);
+            estado.addEventListener('change', filtrar);
+            filtrar();
+        });
+    </script>
+    <script>
+        (() => {
+            const boton = document.querySelector('.cg-citas-menu-toggle');
+            const panel = document.getElementById('sidebar');
+            if (!boton || !panel) return;
+            const cerrar = () => { panel.classList.remove('cg-citas-sidebar-open'); boton.setAttribute('aria-expanded', 'false'); };
+            boton.addEventListener('click', () => {
+                const abierto = panel.classList.toggle('cg-citas-sidebar-open');
+                boton.setAttribute('aria-expanded', String(abierto));
+            });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+            panel.querySelectorAll('.sb-nav a').forEach(a => a.addEventListener('click', cerrar));
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClinGuard — Análisis</title>
+
+    <link rel="stylesheet" th:href="@{/css/styles.css(v=20261118-auditoria4)}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:src="@{/js/theme.js}" defer></script>
+
+
+</head>
+
+<body data-page="analisis" class="cg-view-analisis">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+        <div class="sb-brand">
+            <div class="sb-logo">
+                <img th:src="@{/img/logo-claro.png}" alt="ClinGuard" class="clinguard-logo logo-claro">
+                <img th:src="@{/img/logo-oscuro.png}" alt="ClinGuard" class="clinguard-logo logo-oscuro">
+            </div>
+        </div>
+
+        <nav class="sb-nav" aria-label="Navegación principal">
+            <a class="nb" sec:authorize="hasRole('ADMIN')" th:href="@{/admin}"><i
+                    class="bx bx-shield-quarter"></i><span>Panel Admin</span></a>
+            <a class="nb" sec:authorize="!hasRole('ADMIN')" th:href="@{/dashboard}"><i
+                    class="bx bx-grid-alt"></i><span>Dashboard</span></a>
+
+            <a class="nb active" th:href="@{/analisis}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+                <i class="bx bx-line-chart"></i>
+                <span>Análisis</span>
+            </a>
+
+            <a class="nb" th:href="@{/conversiones}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+                <i class="bx bx-transfer"></i>
+                <span>Conversiones Médicas</span>
+            </a>
+
+            <a class="nb" th:href="@{/pacientes}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+                <i class="bx bx-user"></i>
+                <span>Pacientes</span>
+            </a>
+
+            <a class="nb" th:href="@{/citas}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+                <i class="bx bx-calendar"></i>
+                <span>Citas</span>
+            </a>
+
+            <a class="nb" th:href="@{/historial}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+                <i class="bx bx-notepad"></i>
+                <span>Historial Médico</span>
+            </a>
+
+            <a class="nb" th:href="@{/medicamentos}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+                <i class="bx bx-capsule"></i>
+                <span>Medicamentos</span>
+            </a>
+
+            <a class="nb" th:href="@{/reportes}" sec:authorize="hasAnyRole('ADMIN','MEDICO')">
+                <i class="bx bx-file"></i>
+                <span>Reportes</span>
+            </a>
+
+            <a class="nb" th:href="@{/admin/usuarios/nuevo}" sec:authorize="hasRole('ADMIN')">
+                <i class="bx bx-user-plus"></i>
+                <span>Registrar usuario</span>
+            </a>
+
+            <a th:href="@{/notificaciones}" href="/notificaciones" class="nb">
+                <i class='bx bx-bell'></i>
+                <span>Notificaciones</span>
+                <span class="notif-count" th:if="${noLeidas != null and noLeidas > 0}" th:text="${noLeidas}"></span>
+            </a>
+
+            <a class="nb" th:href="@{/perfil}">
+                <i class="bx bx-user-circle"></i>
+                <span>Mi Perfil</span>
+            </a>
+        </nav>
+
+        <a class="sb-user sb-user-clickable" th:href="@{/perfil}">
+            <div class="avatar"><i class="bx bx-user"></i></div>
+            <div class="u-info">
+                <div class="u-nm" th:text="${#authentication.name}">Usuario</div>
+                <div class="u-rl" sec:authorize="hasRole('ADMIN')">Administrador</div>
+                <div class="u-rl" sec:authorize="hasRole('MEDICO')">Médico</div>
+                <div class="u-rl" sec:authorize="hasRole('ENFERMERO')">Enfermero</div>
+            </div>
+        </a>
+
+        <form th:action="@{/logout}" method="post" class="cg-analisis-logout-form">
+            <button type="submit" class="logout-link cg-inline-analisis-1 cg-analisis-logout-btn">
+                <i class="bx bx-log-out"></i> Salir
+            </button>
+        </form>
+    </aside>
+
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div id="main-content">
+        <header>
+            <div class="h-title">Análisis</div>
+        </header>
+
+        <div class="main-inner">
+            <div class="page active" id="page-analisis">
+
+                <!-- CABECERA -->
+                <div class="card">
+                    <div class="card-toolbar analisis-toolbar">
+                        <div>
+                            <h2 class="section-title-compact">Análisis clínico y operativo</h2>
+                            <p class="muted-text-sm">Indicadores obtenidos de los registros almacenados en ClinGuard.
+                            </p>
+                        </div>
+                        <div class="cg-inline-analisis-2">
+                            <span class="cita-status cita-status-confirmada">
+                                <i class="bx bx-data"></i> Datos del sistema
+                            </span>
+                            <button class="analisis-refresh" type="button" onclick="window.location.reload()">
+                                <i class="bx bx-refresh"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INDICADORES PRINCIPALES -->
+                <div class="grid-4 analisis-section">
+                    <div class="m-card">
+                        <div>
+                            <div class="m-val"><span id="totalPacientes"
+                                    th:text="${totalPacientes != null ? totalPacientes : 0}">0</span></div>
+                            <div class="m-lbl">Pacientes</div>
+                        </div>
+                        <i class="bx bx-user"></i>
+                    </div>
+                    <div class="m-card">
+                        <div>
+                            <div class="m-val"><span id="totalCitas"
+                                    th:text="${totalCitas != null ? totalCitas : 0}">0</span></div>
+                            <div class="m-lbl">Citas</div>
+                        </div>
+                        <i class="bx bx-calendar"></i>
+                    </div>
+                    <div class="m-card">
+                        <div>
+                            <div class="m-val"><span id="totalHistoriales"
+                                    th:text="${totalHistoriales != null ? totalHistoriales : 0}">0</span></div>
+                            <div class="m-lbl">Historiales médicos</div>
+                        </div>
+                        <i class="bx bx-notepad"></i>
+                    </div>
+                    <div class="m-card">
+                        <div>
+                            <div class="m-val"><span id="totalMedicamentos"
+                                    th:text="${totalMedicamentos != null ? totalMedicamentos : 0}">0</span></div>
+                            <div class="m-lbl">Medicamentos</div>
+                        </div>
+                        <i class="bx bx-capsule"></i>
+                    </div>
+                </div>
+
+                <!-- PRIMERA FILA DE GRÁFICAS -->
+                <div class="analisis-grid">
+                    <div class="card">
+                        <div class="card-toolbar">
+                            <div>
+                                <h3 class="section-title-compact">Actividad semanal</h3>
+                                <p class="muted-text-sm">Citas e historiales registrados durante los últimos siete días.
+                                </p>
+                            </div>
+                            <div class="analisis-export-actions" role="group" aria-label="Exportar gráfico">
+                                <button type="button" class="analisis-export-btn" data-export-chart="graficoActividad"
+                                    data-export-format="png" disabled title="Descargar imagen PNG"><i
+                                        class="bx bx-image" aria-hidden="true"></i> PNG</button>
+                                <button type="button" class="analisis-export-btn" data-export-chart="graficoActividad"
+                                    data-export-format="csv" disabled title="Descargar datos CSV"><i
+                                        class="bx bx-spreadsheet" aria-hidden="true"></i> CSV</button>
+                            </div>
+                            <div class="cita-stat-icon cita-stat-blue"><i class="bx bx-line-chart"></i></div>
+                        </div>
+                        <div class="analisis-chart"><canvas id="graficoActividad"></canvas></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-toolbar">
+                            <div>
+                                <h3 class="section-title-compact">Estado de las citas</h3>
+                                <p class="muted-text-sm">Distribución de las citas médicas según su estado actual.</p>
+                            </div>
+                            <div class="analisis-export-actions" role="group" aria-label="Exportar gráfico">
+                                <button type="button" class="analisis-export-btn" data-export-chart="graficoCitas"
+                                    data-export-format="png" disabled title="Descargar imagen PNG"><i
+                                        class="bx bx-image" aria-hidden="true"></i> PNG</button>
+                                <button type="button" class="analisis-export-btn" data-export-chart="graficoCitas"
+                                    data-export-format="csv" disabled title="Descargar datos CSV"><i
+                                        class="bx bx-spreadsheet" aria-hidden="true"></i> CSV</button>
+                            </div>
+                            <div class="cita-stat-icon cita-stat-purple"><i class="bx bx-pie-chart-alt-2"></i></div>
+                        </div>
+                        <div class="analisis-chart"><canvas id="graficoCitas"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- SEGUNDA FILA DE GRÁFICAS -->
+                <div class="analisis-grid">
+                    <div class="card">
+                        <div class="card-toolbar">
+                            <div>
+                                <h3 class="section-title-compact">Nuevos pacientes</h3>
+                                <p class="muted-text-sm">Pacientes registrados durante los últimos seis meses.</p>
+                            </div>
+                            <div class="analisis-export-actions" role="group" aria-label="Exportar gráfico">
+                                <button type="button" class="analisis-export-btn" data-export-chart="graficoPacientes"
+                                    data-export-format="png" disabled title="Descargar imagen PNG"><i
+                                        class="bx bx-image" aria-hidden="true"></i> PNG</button>
+                                <button type="button" class="analisis-export-btn" data-export-chart="graficoPacientes"
+                                    data-export-format="csv" disabled title="Descargar datos CSV"><i
+                                        class="bx bx-spreadsheet" aria-hidden="true"></i> CSV</button>
+                            </div>
+                            <div class="cita-stat-icon cita-stat-green"><i class="bx bx-user-plus"></i></div>
+                        </div>
+                        <div class="analisis-chart"><canvas id="graficoPacientes"></canvas></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-toolbar">
+                            <div>
+                                <h3 class="section-title-compact">Registros clínicos</h3>
+                                <p class="muted-text-sm">Historiales médicos registrados durante los últimos seis meses.
+                                </p>
+                            </div>
+                            <div class="analisis-export-actions" role="group" aria-label="Exportar gráfico">
+                                <button type="button" class="analisis-export-btn" data-export-chart="graficoHistoriales"
+                                    data-export-format="png" disabled title="Descargar imagen PNG"><i
+                                        class="bx bx-image" aria-hidden="true"></i> PNG</button>
+                                <button type="button" class="analisis-export-btn" data-export-chart="graficoHistoriales"
+                                    data-export-format="csv" disabled title="Descargar datos CSV"><i
+                                        class="bx bx-spreadsheet" aria-hidden="true"></i> CSV</button>
+                            </div>
+                            <div class="cita-stat-icon cita-stat-orange"><i class="bx bx-notepad"></i></div>
+                        </div>
+                        <div class="analisis-chart"><canvas id="graficoHistoriales"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- ============================================================== -->
+                <!-- NUEVA SECCIÓN: AUDITORÍA CLÍNICA DE DOSIS -->
+                <!-- ============================================================== -->
+                <div class="card analisis-section cg-inline-analisis-3">
+                    <div class="card-toolbar">
+                        <div>
+                            <h3 class="section-title-compact">Auditoría Clínica de Dosis</h3>
+                            <p class="muted-text-sm">Registro de comparaciones matemáticas de dosis realizadas por usuarios autorizados. No certifica seguridad clínica.</p>
+                        </div>
+                        <div class="cita-stat-icon cita-stat-orange"><i class="bx bx-shield-quarter"></i></div>
+                    </div>
+
+                    <!-- Tarjetas de resumen de auditoría -->
+                    <div class="grid-4 cg-inline-analisis-4">
+                        <div class="m-card">
+                            <div>
+                                <div class="m-val" th:text="${totalValidaciones != null ? totalValidaciones : 0}">0
+                                </div>
+                                <div class="m-lbl">Total de validaciones</div>
+                            </div>
+                            <i class="bx bx-check-shield"></i>
+                        </div>
+                        <div class="m-card">
+                            <div>
+                                <div class="m-val cg-inline-analisis-5"
+                                    th:text="${totalSeguras != null ? totalSeguras : 0}">0</div>
+                                <div class="m-lbl">Dentro del rango</div>
+                            </div>
+                            <i class="bx bx-check-circle"></i>
+                        </div>
+                        <div class="m-card">
+                            <div>
+                                <div class="m-val cg-inline-analisis-6"
+                                    th:text="${totalInfradosis != null ? totalInfradosis : 0}">0</div>
+                                <div class="m-lbl">Por debajo del rango</div>
+                            </div>
+                            <i class="bx bx-error"></i>
+                        </div>
+                        <div class="m-card">
+                            <div>
+                                <div class="m-val cg-inline-analisis-7"
+                                    th:text="${totalSobredosis != null ? totalSobredosis : 0}">0</div>
+                                <div class="m-lbl">Por encima del rango</div>
+                            </div>
+                            <i class="bx bx-error-alt"></i>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico y Tabla de Auditoría -->
+                    <div class="audit-grid">
+                        <!-- Gráfico de Dona -->
+                        <div class="audit-card-inner">
+                            <div class="card-toolbar cg-inline-analisis-8">
+                                <div>
+                                    <h4 class="section-title-compact cg-inline-analisis-9">Distribución de validaciones
+                                    </h4>
+                                </div>
+                                <div class="analisis-export-actions" role="group"
+                                    aria-label="Exportar gráfico de auditoría">
+                                    <button type="button" class="analisis-export-btn"
+                                        data-export-chart="graficoAuditoria" data-export-format="png" disabled><i
+                                            class="bx bx-image" aria-hidden="true"></i> PNG</button>
+                                    <button type="button" class="analisis-export-btn"
+                                        data-export-chart="graficoAuditoria" data-export-format="csv" disabled><i
+                                            class="bx bx-spreadsheet" aria-hidden="true"></i> CSV</button>
+                                </div>
+                            </div>
+                            <div class="cg-inline-analisis-10">
+                                <canvas id="graficoAuditoria"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de últimas validaciones -->
+                        <div class="audit-card-inner">
+                            <div class="card-toolbar cg-inline-analisis-11">
+                                <div>
+                                    <h4 class="section-title-compact cg-inline-analisis-12">Últimas validaciones registradas
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="table-container cg-inline-analisis-13">
+                                <table class="cg-inline-analisis-14">
+                                    <thead>
+                                        <tr>
+                                            <th>Usuario</th>
+                                            <th>Dosis (mg)</th>
+                                            <th>Rango registrado (mg)</th>
+                                            <th>Resultado</th>
+                                            <th>Fecha</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="val : ${validacionesRecientes}">
+                                            <td><strong th:text="${val.usuario}">Profesional</strong></td>
+                                            <td th:text="${val.dosisRecetada}">400</td>
+                                            <td>
+                                                <span th:if="${val.containsKey('minimoMg') and val.containsKey('maximoMg') and val['minimoMg'] != null and !#strings.isEmpty(val['minimoMg']) and val['maximoMg'] != null and !#strings.isEmpty(val['maximoMg'])}"
+                                                      th:text="|${val['minimoMg']} – ${val['maximoMg']}|">250 – 500</span>
+                                                <span th:unless="${val.containsKey('minimoMg') and val.containsKey('maximoMg') and val['minimoMg'] != null and !#strings.isEmpty(val['minimoMg']) and val['maximoMg'] != null and !#strings.isEmpty(val['maximoMg'])}">No disponible</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge-estado"
+                                                      th:classappend="${val.estado == 'DENTRO_DEL_RANGO_CONFIGURADO' ? 'badge-segura' : (val.estado == 'POR_DEBAJO_DEL_RANGO' ? 'badge-infra' : (val.estado == 'POR_ENCIMA_DEL_RANGO' ? 'badge-sobre' : ''))}"
+                                                      th:text="${val.estado == 'DENTRO_DEL_RANGO_CONFIGURADO' ? 'Dentro del rango' : (val.estado == 'POR_DEBAJO_DEL_RANGO' ? 'Por debajo del rango' : (val.estado == 'POR_ENCIMA_DEL_RANGO' ? 'Por encima del rango' : 'No disponible'))}">
+                                                    Dentro del rango
+                                                </span>
+                                            </td>
+                                            <td th:text="${val.fecha}">2026-11-17</td>
+                                        </tr>
+                                        <tr th:if="${#lists.isEmpty(validacionesRecientes)}">
+                                            <td colspan="5" class="cg-inline-analisis-15">No hay validaciones de dosis registradas todavía.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- RESUMEN DE CITAS -->
+                <div class="card analisis-section">
+                    <div class="card-toolbar">
+                        <div>
+                            <h3 class="section-title-compact">Resumen de citas</h3>
+                            <p class="muted-text-sm">Cantidad de citas registradas por estado.</p>
+                        </div>
+                    </div>
+                    <div class="grid-4">
+                        <div class="m-card">
+                            <div>
+                                <div class="m-val" id="citasProgramadas"
+                                    th:text="${citasProgramadas != null ? citasProgramadas : 0}">0</div>
+                                <div class="m-lbl">Programadas</div>
+                            </div>
+                            <i class="bx bx-time-five"></i>
+                        </div>
+                        <div class="m-card">
+                            <div>
+                                <div class="m-val" id="citasConfirmadas"
+                                    th:text="${citasConfirmadas != null ? citasConfirmadas : 0}">0</div>
+                                <div class="m-lbl">Confirmadas</div>
+                            </div>
+                            <i class="bx bx-calendar-check"></i>
+                        </div>
+                        <div class="m-card">
+                            <div>
+                                <div class="m-val" id="citasAtendidas"
+                                    th:text="${citasAtendidas != null ? citasAtendidas : 0}">0</div>
+                                <div class="m-lbl">Atendidas</div>
+                            </div>
+                            <i class="bx bx-check-double"></i>
+                        </div>
+                        <div class="m-card">
+                            <div>
+                                <div class="m-val" id="citasCanceladas"
+                                    th:text="${citasCanceladas != null ? citasCanceladas : 0}">0</div>
+                                <div class="m-lbl">Canceladas</div>
+                            </div>
+                            <i class="bx bx-calendar-x"></i>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- INFORMACIÓN -->
+                <div class="card analisis-section cg-inline-analisis-16">
+                    <div class="analisis-note">
+                        <i class="bx bx-info-circle"></i>
+                        <div>
+                            <h3 class="section-title-compact">Información del análisis</h3>
+                            <p class="muted-text-sm">
+                                Los indicadores se actualizan al recargar la página con los registros del servidor.
+                                Los resultados de dosis representan comparaciones matemáticas con rangos configurados, no una evaluación de seguridad clínica.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div id="analisisExportStatus" class="analisis-export-status" role="status" aria-live="polite"></div>
+
+    <!-- DATOS PROPORCIONADOS POR SPRING BOOT -->
+    <script th:inline="javascript">
+        const datosAnalisis = {
+            actividadDias: /*[[${actividadDias}]]*/[],
+            actividadCitas: /*[[${actividadCitas}]]*/[],
+            actividadHistoriales: /*[[${actividadHistoriales}]]*/[],
+            citasPorEstado: /*[[${citasPorEstado}]]*/ {},
+            meses: /*[[${meses}]]*/[],
+            pacientesPorMes: /*[[${pacientesPorMes}]]*/[],
+            historialesPorMes: /*[[${historialesPorMes}]]*/[],
+
+            // Resultados de comparación matemática; no son juicios clínicos
+            totalSeguras: /*[[${totalSeguras}]]*/ 0,
+            totalInfradosis: /*[[${totalInfradosis}]]*/ 0,
+            totalSobredosis: /*[[${totalSobredosis}]]*/ 0
+        };
+    </script>
+
+
+    <!-- GRÁFICAS DINÁMICAS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof Chart === "undefined") {
+                console.error("No se pudo cargar Chart.js");
+                return;
+            }
+
+            Chart.defaults.color = "#9ca3af";
+            Chart.defaults.borderColor = "rgba(148, 163, 184, 0.12)";
+            Chart.defaults.font.family = "Inter, Arial, sans-serif";
+
+            function arreglo(valor) { return Array.isArray(valor) ? valor : []; }
+            function mapa(valor) { return valor && typeof valor === "object" && !Array.isArray(valor) ? valor : {}; }
+            function numero(valor) { const n = Number(valor); return Number.isFinite(n) ? n : 0; }
+            function serieNumerica(valor) { return arreglo(valor).map(numero); }
+            function tieneDatos(...series) { return series.some(serie => serie.some(valor => numero(valor) !== 0)); }
+            function mostrarSinDatos(id) {
+                const canvas = document.getElementById(id);
+                if (!canvas) return;
+                canvas.style.display = "none";
+                const aviso = document.createElement("div");
+                aviso.className = "analisis-empty";
+                aviso.textContent = "No hay registros disponibles para este período.";
+                canvas.parentElement.appendChild(aviso);
+            }
+            function crearGrafica(id, configuracion, hayDatos) {
+                const canvas = document.getElementById(id);
+                if (!canvas) return;
+                if (!hayDatos) { mostrarSinDatos(id); return; }
+                new Chart(canvas, configuracion);
+            }
+
+            // 1. ACTIVIDAD SEMANAL
+            const dias = arreglo(datosAnalisis.actividadDias);
+            const citasSemana = serieNumerica(datosAnalisis.actividadCitas);
+            const historialesSemana = serieNumerica(datosAnalisis.actividadHistoriales);
+
+            crearGrafica("graficoActividad", {
+                type: "line",
+                data: {
+                    labels: dias,
+                    datasets: [
+                        { label: "Citas", data: citasSemana, borderColor: "#3b82f6", backgroundColor: "rgba(59,130,246,0.12)", fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6 },
+                        { label: "Historias clínicas", data: historialesSemana, borderColor: "#8b5cf6", backgroundColor: "rgba(139,92,246,0.08)", fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: "index" },
+                    plugins: { legend: { position: "top", align: "end", labels: { usePointStyle: true, boxWidth: 8, padding: 18 } } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } }
+                }
+            }, dias.length > 0 && tieneDatos(citasSemana, historialesSemana));
+
+            // 2. CITAS POR ESTADO
+            const estados = mapa(datosAnalisis.citasPorEstado);
+            const etiquetasEstados = Object.keys(estados);
+            const valoresEstados = Object.values(estados).map(numero);
+            const coloresEstados = etiquetasEstados.map(estado => {
+                const clave = String(estado).toUpperCase().trim();
+                if (clave.includes("PROGRAM") || clave.includes("PENDIENT")) return "#f59e0b";
+                if (clave.includes("CONFIRM")) return "#3b82f6";
+                if (clave.includes("ATEND") || clave.includes("COMPLET") || clave.includes("FINALIZ")) return "#10b981";
+                if (clave.includes("CANCEL")) return "#ef4444";
+                return "#64748b";
+            });
+
+            crearGrafica("graficoCitas", {
+                type: "doughnut",
+                data: { labels: etiquetasEstados, datasets: [{ data: valoresEstados, backgroundColor: coloresEstados, borderWidth: 0, hoverOffset: 8 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: "68%", plugins: { legend: { position: "bottom", labels: { usePointStyle: true, padding: 20 } } } }
+            }, tieneDatos(valoresEstados));
+
+            // 3. PACIENTES POR MES
+            const meses = arreglo(datosAnalisis.meses);
+            const pacientesMes = serieNumerica(datosAnalisis.pacientesPorMes);
+
+            crearGrafica("graficoPacientes", {
+                type: "bar",
+                data: { labels: meses, datasets: [{ label: "Nuevos pacientes", data: pacientesMes, backgroundColor: "#10b981", borderRadius: 7, borderSkipped: false }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+            }, meses.length > 0 && tieneDatos(pacientesMes));
+
+            // 4. HISTORIALES POR MES
+            const historialesMes = serieNumerica(datosAnalisis.historialesPorMes);
+
+            crearGrafica("graficoHistoriales", {
+                type: "bar",
+                data: { labels: meses, datasets: [{ label: "Registros clínicos", data: historialesMes, backgroundColor: "#8b5cf6", borderRadius: 7, borderSkipped: false }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+            }, meses.length > 0 && tieneDatos(historialesMes));
+
+            // 5. GRÁFICO DE AUDITORÍA CLÍNICA (NUEVO)
+            const datosAuditoria = [
+                datosAnalisis.totalSeguras,
+                datosAnalisis.totalInfradosis,
+                datosAnalisis.totalSobredosis
+            ];
+
+            crearGrafica("graficoAuditoria", {
+                type: "doughnut",
+                data: {
+                    labels: ["Dentro del rango", "Por debajo del rango", "Por encima del rango"],
+                    datasets: [{
+                        data: datosAuditoria,
+                        backgroundColor: ["#10b981", "#f59e0b", "#ef4444"],
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: "70%",
+                    plugins: {
+                        legend: { position: "bottom", labels: { usePointStyle: true, padding: 15, font: { size: 12 } } }
+                    }
+                }
+            }, tieneDatos(datosAuditoria));
+
+        });
+    </script>
+
+    <!-- Exportación de gráficos: no altera los datos ni el backend -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const nombres = {
+                graficoActividad: "actividad-semanal",
+                graficoCitas: "estado-citas",
+                graficoPacientes: "nuevos-pacientes",
+                graficoHistoriales: "registros-clinicos",
+                graficoAuditoria: "auditoria-dosis"
+            };
+            const status = document.getElementById("analisisExportStatus");
+            const botones = [...document.querySelectorAll("[data-export-chart]")];
+            const grafico = id => typeof Chart !== "undefined" ? Chart.getChart(id) : null;
+            const disponible = id => {
+                const chart = grafico(id);
+                return chart && chart.data.datasets.some(ds =>
+                    Array.isArray(ds.data) && ds.data.some(v => Number(v) !== 0 && Number.isFinite(Number(v))));
+            };
+            const actualizarBotones = () => {
+                botones.forEach(btn => { btn.disabled = !disponible(btn.dataset.exportChart); });
+            };
+            // La creación de Chart.js sucede en otro listener DOMContentLoaded.
+            // Se comprueba después de finalizar ambos listeners.
+            requestAnimationFrame(actualizarBotones);
+
+            function descargar(blob, nombre) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = nombre;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 3000);
+            }
+            function notificar(mensaje) {
+                status.textContent = mensaje;
+            }
+            function exportarPng(chart, nombre) {
+                // Exporta imagen nítida (2x), con fondo visible también en visores de PNG.
+                const origen = chart.canvas;
+                const factor = 2;
+                const salida = document.createElement("canvas");
+                salida.width = origen.width * factor;
+                salida.height = origen.height * factor;
+                const ctx = salida.getContext("2d");
+                ctx.fillStyle = "#142f39";
+                ctx.fillRect(0, 0, salida.width, salida.height);
+                ctx.drawImage(origen, 0, 0, salida.width, salida.height);
+                salida.toBlob(blob => {
+                    if (!blob) { notificar("No se pudo generar la imagen."); return; }
+                    descargar(blob, nombre + ".png");
+                    notificar("Imagen PNG descargada.");
+                }, "image/png");
+            }
+            function exportarCsv(chart, nombre) {
+                const escapar = valor => {
+                    let texto = String(valor == null ? "" : valor);
+                    // Evita interpretación de fórmulas en hojas de cálculo.
+                    if (/^[\s]*[=+@\-]/.test(texto) && !/^-?\d+(\.\d+)?$/.test(texto.trim())) texto = "'" + texto;
+                    return '"' + texto.replace(/"/g, '""') + '"';
+                };
+                const conjuntos = chart.data.datasets;
+                const cabecera = ["Periodo / Categoría", ...conjuntos.map((ds, i) => ds.label || ("Serie " + (i + 1)))];
+                const filas = chart.data.labels.map((label, i) =>
+                    [label, ...conjuntos.map(ds => ds.data[i] ?? "")]);
+                const contenido = "\uFEFF" + [cabecera, ...filas]
+                    .map(fila => fila.map(escapar).join(";"))
+                    .join("\r\n");
+                descargar(new Blob([contenido], { type: "text/csv;charset=utf-8;" }), nombre + ".csv");
+                notificar("Datos CSV descargados.");
+            }
+            botones.forEach(btn => btn.addEventListener("click", () => {
+                const id = btn.dataset.exportChart;
+                const chart = grafico(id);
+                if (!chart || !disponible(id)) {
+                    notificar("Este gráfico no tiene datos disponibles para exportar.");
+                    actualizarBotones();
+                    return;
+                }
+                const nombre = "clinguard-" + nombres[id] + "-" + new Date().toISOString().slice(0, 10);
+                if (btn.dataset.exportFormat === "png") exportarPng(chart, nombre);
+                else exportarCsv(chart, nombre);
+            }));
+        });
+    </script>
+
+</body>
+
+</html>

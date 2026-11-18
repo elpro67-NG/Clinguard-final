@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClinGuard — CDSS Platform | Asistente Inteligente de Dosis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<!-- Botón toggle para móvil -->
+<button class="sb-toggle" id="sb-toggle" onclick="toggleSb()">☰</button>
+
+<!-- ==================== PANTALLA DE LOGIN ==================== -->
+<div id="login-screen">
+  <div class="auth-box">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <h2 style="font-size: 24px; font-weight: 700;">ClinGuard<span style="color: var(--accent);">•</span></h2>
+      <p style="font-size: 13px; color: var(--text2); margin-top: 4px;">Clinical Decision Support System</p>
+    </div>
+    <div class="auth-tabs">
+      <div id="tab-l" class="tab active" onclick="switchTab('login')">Iniciar Sesión</div>
+      <div id="tab-r" class="tab" onclick="switchTab('registro')">Registrar Cuenta</div>
+    </div>
+    <div id="la" class="error-banner"></div>
+    <div id="lok" class="ok-banner"></div>
+
+    <div id="fl">
+      <div class="input-group"><label>Usuario</label><input type="text" id="lu" placeholder="Nombre de usuario" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="input-group"><label>Contraseña</label><input type="password" id="lp" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button type="button" class="btn-primary" onclick="doLogin()" style="width:100%; margin-top:10px; padding:12px;">Autenticar →</button>
+      <p style="text-align: center; font-size: 11px; color: var(--text2); margin-top: 12px;">Demo: <code style="color: var(--accent);">admin / admin123 · medico / medico123</code></p>
+    </div>
+
+    <div id="fr" style="display: none;">
+      <div class="input-group"><label>Nombre de usuario</label><input type="text" id="ru" placeholder="Ej: dr_perez"></div>
+      <div class="input-group"><label>Contraseña (mín. 6 caracteres)</label><input type="password" id="rp" placeholder="••••••••"></div>
+      <div class="input-group">
+        <label>Rol de acceso</label>
+        <select id="rr">
+          <option value="MEDICO">Médico</option>
+          <option value="ENFERMERO">Enfermero</option>
+          <option value="ADMIN">Administrador</option>
+        </select>
+      </div>
+      <button type="button" class="btn-primary" onclick="doRegistro()" style="width:100%; margin-top:10px; padding:12px;">Crear cuenta →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SIDEBAR ==================== -->
+<div id="sidebar" style="display: none;">
+  <div class="sb-brand">
+    <div class="sb-logo">ClinGuard<span>•</span></div>
+    <button type="button" id="theme-btn" onclick="toggleTheme()" style="background: none; font-size: 16px; border: none; cursor: pointer;">🌙</button>
+  </div>
+  <div class="sb-nav">
+    <div class="nb active" onclick="nav('dashboard')"><i class='bx bx-grid-alt'></i> Panel Administrativo</div>
+    <div class="nb" onclick="nav('analisis')"><i class='bx bx-bar-chart-alt-2'></i> Análisis Clínico</div>
+    <div class="nb" onclick="nav('conversion')"><i class='bx bx-transfer-alt'></i> Conversiones Médicas</div>
+    <div class="nb" onclick="nav('pacientes')"><i class='bx bx-user'></i> Pacientes</div>
+    <div class="nb" onclick="nav('medicamentos')"><i class='bx bx-capsule'></i> Medicamentos</div>
+    <div class="nb" onclick="nav('historial')"><i class='bx bx-history'></i> Mi Historial</div>
+    <div class="nb" onclick="nav('reportes')"><i class='bx bx-file-blank'></i> Reportes Clínicos</div>
+    <div id="nb-admin" class="nb" onclick="nav('admin')" style="display: none; color: #f87171;"><i class='bx bx-shield'></i> Panel Admin</div>
+    <div class="nb" onclick="nav('perfil')"><i class='bx bx-user-circle'></i> Mi Perfil</div>
+  </div>
+  <div class="sb-user" onclick="nav('perfil')" style="cursor: pointer;">
+    <div id="sb-av" class="avatar">US</div>
+    <div class="u-info">
+      <div id="sb-nm" class="u-nm">—</div>
+      <div id="sb-rl" class="u-rl">—</div>
+    </div>
+    <button type="button" onclick="event.stopPropagation(); doLogout()" style="background: none; font-size: 14px; color: var(--text2); border: none; cursor: pointer;" title="Cerrar sesión">🚪</button>
+  </div>
+</div>
+
+<!-- ==================== MAIN CONTENT ==================== -->
+<div id="main-content" style="display: none;">
+  <header>
+    <div id="h-title" class="h-title">Panel Administrativo</div>
+    <span style="font-size: 12px; color: var(--text2); font-weight: 500;" id="hdr-theme">🌙</span>
+  </header>
+  <div class="main-inner">
+
+    <!-- ==================== DASHBOARD ==================== -->
+    <div id="page-dashboard" class="page active">
+      <div class="grid-4">
+        <div class="m-card"><div class="m-ic">📈</div><div><div class="m-val" id="m-hoy">0</div><div class="m-lbl">Conversiones Hoy</div></div></div>
+        <div class="m-card"><div class="m-ic">📊</div><div><div class="m-val" id="m-tot">0</div><div class="m-lbl">Total Historial</div></div></div>
+        <div class="m-card"><div class="m-ic">👤</div><div><div class="m-val" id="m-pac">0</div><div class="m-lbl">Pacientes Registrados</div></div></div>
+        <div class="m-card"><div class="m-ic">💊</div><div><div class="m-val" id="m-med">0</div><div class="m-lbl">Fármacos Activos</div></div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="font-size:15px; margin-bottom:16px;">📈 Actividad — últimos 7 días</h3>
+          <div id="chart" class="chart-container"></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px; margin-bottom:16px;">🗂️ Conversiones más frecuentes</h3>
+          <div id="top-tipos" style="color:var(--text2); font-size:13px;">Sin registros aún.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <h3 style="font-size:15px;">📜 Últimas conversiones</h3>
+          <button type="button" class="btn-sec" onclick="nav('historial')" style="padding:6px 14px; font-size:13px;">Ver todo</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Tipo</th><th>Entrada</th><th>Resultado</th><th>Fecha</th></tr>
+            </thead>
+            <tbody id="dash-tb"><tr class="empty-row"><td colspan="4">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== ANÁLISIS CLÍNICO ==================== -->
+    <div id="page-analisis" class="page">
+      <section class="analysis-intro">
+        <div>
+          <h1>Panel de Análisis Clínico</h1>
+          <p>Resumen en tiempo real de actividad, pacientes, conversiones y alertas del sistema.</p>
+        </div>
+        <span class="analysis-demo-badge"><i class='bx bx-pulse'></i> Datos en tiempo real</span>
+      </section>
+
+      <!-- KPIs -->
+      <section class="grid-4" aria-label="Indicadores principales">
+        <div class="m-card analysis-kpi">
+          <div class="analysis-kpi-icon"><i class='bx bx-user'></i></div>
+          <div>
+            <div class="m-val" id="kpi-pac">—</div>
+            <div class="m-lbl">Pacientes Registrados</div>
+            <div class="analysis-trend neutral" id="kpi-pac-trend">Cargando…</div>
+          </div>
+        </div>
+        <div class="m-card analysis-kpi">
+          <div class="analysis-kpi-icon"><i class='bx bx-transfer-alt'></i></div>
+          <div>
+            <div class="m-val" id="kpi-conv">—</div>
+            <div class="m-lbl">Total Conversiones</div>
+            <div class="analysis-trend neutral" id="kpi-conv-trend">Cargando…</div>
+          </div>
+        </div>
+        <div class="m-card analysis-kpi">
+          <div class="analysis-kpi-icon"><i class='bx bx-capsule'></i></div>
+          <div>
+            <div class="m-val" id="kpi-med">—</div>
+            <div class="m-lbl">Medicamentos Activos</div>
+            <div class="analysis-trend neutral">Catálogo vigente</div>
+          </div>
+        </div>
+        <div class="m-card analysis-kpi" style="border-left: 3px solid var(--danger);">
+          <div class="analysis-kpi-icon" style="background: var(--danger-dim); color: var(--danger);"><i class='bx bx-error-circle'></i></div>
+          <div>
+            <div class="m-val" id="kpi-alertas">—</div>
+            <div class="m-lbl">Alertas (Sobredosis + Subdosis)</div>
+            <div class="analysis-trend warning" id="kpi-alertas-trend">Cargando…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gráfico de barras + Donut -->
+      <section class="analysis-grid-main">
+        <article class="card analysis-chart-card">
+          <div class="analysis-card-head">
+            <div>
+              <h2>Conversiones — últimas 6 semanas</h2>
+              <p>Historial de conversiones médicas realizadas por semana</p>
+            </div>
+            <span class="badge badge-blue">Conversiones</span>
+          </div>
+          <div class="analysis-bars" role="img" aria-label="Gráfico de barras de conversiones por semana">
+            <div class="analysis-y-labels" aria-hidden="true" id="analisis-y-labels">
+              <span>—</span><span>—</span><span>—</span><span>0</span>
+            </div>
+            <div class="analysis-bar-plot" id="analisis-bar-plot">
+              <div class="analysis-grid-lines" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              <!-- Barras generadas dinámicamente por JS -->
+              <div style="color:var(--text2); font-size:12px; align-self:center; text-align:center; width:100%;">Cargando datos…</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card analysis-chart-card">
+          <div class="analysis-card-head">
+            <div>
+              <h2>Distribución por Semáforo</h2>
+              <p>Resultado de conversiones con paciente+medicamento</p>
+            </div>
+          </div>
+          <div class="analysis-donut-layout">
+            <div class="analysis-donut" id="analisis-donut" role="img" aria-label="Distribución de resultados de dosis">
+              <div class="analysis-donut-center">
+                <strong id="analisis-donut-total">—</strong>
+                <span>Con validación</span>
+              </div>
+            </div>
+            <div class="analysis-legend">
+              <div>
+                <span class="legend-dot legend-primary"></span>
+                <div><strong id="leg-verde">—%</strong><small>Dosis Segura</small></div>
+              </div>
+              <div>
+                <span class="legend-dot legend-danger"></span>
+                <div><strong id="leg-rojo">—%</strong><small>Sobredosis</small></div>
+              </div>
+              <div>
+                <span class="legend-dot legend-warning"></span>
+                <div><strong id="leg-amarillo">—%</strong><small>Subdosis</small></div>
+              </div>
+              <div>
+                <span class="legend-dot legend-secondary"></span>
+                <div><strong id="leg-morado">—%</strong><small>Sugerencia</small></div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- Ranking + Tabla resumen -->
+      <section class="analysis-grid-secondary">
+        <article class="card analysis-chart-card">
+          <div class="analysis-card-head">
+            <div>
+              <h2>Tipos más utilizados</h2>
+              <p>Ranking de conversiones por categoría</p>
+            </div>
+          </div>
+          <div class="analysis-ranking" id="analisis-ranking">
+            <div style="color:var(--text2); font-size:12px;">Cargando…</div>
+          </div>
+        </article>
+
+        <article class="card analysis-chart-card">
+          <div class="analysis-card-head">
+            <div>
+              <h2>Resumen de tendencia</h2>
+              <p>Comparación de indicadores clave del sistema</p>
+            </div>
+          </div>
+          <div class="analysis-table-wrap">
+            <table class="analysis-table">
+              <thead>
+                <tr><th>Indicador</th><th>Valor</th><th>Estado</th></tr>
+              </thead>
+              <tbody id="analisis-resumen-tb">
+                <tr class="empty-row"><td colspan="3">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </div>
+
+    <!-- ==================== CONVERSIONES MÉDICAS ==================== -->
+    <div id="page-conversion" class="page">
+      <!-- Selector de categoría -->
+      <div class="cat-grid">
+        <div class="cat active" onclick="selectCat(this,'Dosis y Peso')">⚖️ Dosis y Peso</div>
+        <div class="cat" onclick="selectCat(this,'Volumen')">💧 Volumen e Infusión</div>
+        <div class="cat" onclick="selectCat(this,'Laboratorio')">🧪 Laboratorio</div>
+      </div>
+
+      <!-- Opciones Dosis y Peso -->
+      <div id="opts-DosisPeso" class="conv-opts">
+        <div class="copt sel" onclick="selOpt(this,'Gramos a Miligramos')">Gramos → Miligramos (g ➔ mg)</div>
+        <div class="copt" onclick="selOpt(this,'Miligramos a Gramos')">Miligramos → Gramos (mg ➔ g)</div>
+        <div class="copt" onclick="selOpt(this,'Miligramos a Microgramos')">Miligramos → Microgramos (mg ➔ µg)</div>
+        <div class="copt" onclick="selOpt(this,'Kilogramos a Gramos')">Kilogramos → Gramos (kg ➔ g)</div>
+        <div class="copt" onclick="selOpt(this,'Calcular Dosis por Peso (mg/kg)')">Calcular Dosis / Peso (mg/kg)</div>
+      </div>
+
+      <!-- Opciones Volumen -->
+      <div id="opts-Volumen" class="conv-opts" style="display: none;">
+        <div class="copt sel" onclick="selOpt(this,'Mililitros a Litros')">Mililitros → Litros (mL ➔ L)</div>
+        <div class="copt" onclick="selOpt(this,'Litros a Mililitros')">Litros → Mililitros (L ➔ mL)</div>
+        <div class="copt" onclick="selOpt(this,'Mililitros a Gotas')">Mililitros → Gotas (mL ➔ gotas)</div>
+        <div class="copt" onclick="selOpt(this,'Gotas a Mililitros')">Gotas → Mililitros (gotas ➔ mL)</div>
+        <div class="copt" onclick="selOpt(this,'CC a Mililitros')">CC → Mililitros</div>
+      </div>
+
+      <!-- Opciones Laboratorio -->
+      <div id="opts-Laboratorio" class="conv-opts" style="display: none;">
+        <div class="copt sel" onclick="selOpt(this,'Glucosa mmol/L a mg/dL')">Glucosa (mmol/L ➔ mg/dL)</div>
+        <div class="copt" onclick="selOpt(this,'Glucosa mg/dL a mmol/L')">Glucosa (mg/dL ➔ mmol/L)</div>
+        <div class="copt" onclick="selOpt(this,'UI a Miligramos')">Unidades Internacionales (UI ➔ mg)</div>
+        <div class="copt" onclick="selOpt(this,'Colesterol mmol/L a mg/dL')">Colesterol (mmol/L ➔ mg/dL)</div>
+        <div class="copt" onclick="selOpt(this,'Creatinina mg/dL a µmol/L')">Creatinina (mg/dL ➔ µmol/L)</div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Panel izquierdo: formulario -->
+        <div class="card">
+          <div id="conv-error-banner" class="error-banner">
+            <b>⚠️ Error en la conversión</b>
+            <span id="conv-error-msg"></span>
+            <div id="conv-error-code" class="error-code"></div>
+          </div>
+
+          <div class="input-group">
+            <label style="font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;">A) Paciente de control <span style="color:var(--text2); font-weight:400;">(solo para Dosis y Peso)</span></label>
+            <input type="text" id="conv-buscar-paciente" placeholder="Buscar por cédula o nombre…" oninput="filtrarPaciente()" style="margin-bottom:6px;">
+            <select id="conv-paciente-select" onchange="autoValidateOrSuggest()">
+              <option value="">— Sin paciente —</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label style="font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;">B) Fármaco del vademécum <span style="color:var(--text2); font-weight:400;">(solo para Dosis y Peso)</span></label>
+            <select id="conv-medicamento-select" onchange="autoValidateOrSuggest()">
+              <option value="">— Sin medicamento —</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label id="conv-lbl" style="font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;">C) Valor a convertir</label>
+            <input type="number" id="conv-val" placeholder="0.00" step="any" min="0" oninput="autoValidateOrSuggest()">
+          </div>
+
+          <button type="button" class="btn-primary" onclick="manualConversion()" style="width:100%; padding:12px; font-size:15px; letter-spacing:.5px;">
+            ⚡ Calcular y analizar →
+          </button>
+
+          <p style="margin-top:12px; font-size:11px; color:var(--text2); line-height:1.6;">
+            💡 <b>Sin paciente/medicamento:</b> convierte unidades.<br>
+            💡 <b>Con paciente + medicamento SOLO en DOSIS Y PESO:</b> valida la dosis o muestra sugerencia.<br>
+            💡 <b>En Volumen o Laboratorio</b> se ignora paciente/medicamento y se hace conversión normal.
+          </p>
+        </div>
+
+        <!-- Panel derecho: resultado + semáforo -->
+        <div id="conv-semaforo-card" class="card res-card neutral">
+          <div class="sem-lights">
+            <div class="sem-light" id="sem-red">🔴</div>
+            <div class="sem-light" id="sem-yellow">🟡</div>
+            <div class="sem-light" id="sem-green">🟢</div>
+            <div class="sem-light" id="sem-suggest">💜</div>
+          </div>
+          <div id="res-val" class="res-big">—</div>
+          <div id="res-unit" class="res-sub">Esperando datos…</div>
+          <div id="res-obs" class="res-obs" style="display:none;"></div>
+          <div id="suggest-dose-box" class="dosis-sugerida-badge" style="display:none;" onclick="copySuggestedDose()">
+            ✨ Dosis sugerida: <span id="suggest-dose-value" class="badge-value">—</span> mg → click para usar
+          </div>
+          <div id="res-stamp" class="res-stamp" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Guía semáforo -->
+      <div class="card" style="padding:16px 20px;">
+        <h4 style="font-size:13px; color:var(--text2); margin-bottom:10px; text-transform:uppercase; letter-spacing:.5px;">Guía de interpretación del semáforo</h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; font-size:13px; line-height:1.7;">
+          <div>🟢 <b>Dosis segura</b> — dentro del rango terapéutico calculado.</div>
+          <div>🟡 <b>Infradosis</b> — por debajo del mínimo. Eficacia comprometida.</div>
+          <div>🔴 <b>Sobredosis</b> — supera el máximo. Riesgo de toxicidad.</div>
+          <div>💜 <b>Sugerencia</b> — dosis ideal (punto medio del rango).</div>
+          <div>⚖️ <b>Conversión normal</b> — resultado matemático sin validación.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PACIENTES ==================== -->
+    <div id="page-pacientes" class="page">
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+        <input type="text" id="pac-search" placeholder="Filtrar por cédula o nombre…" oninput="filterPacientes()" style="max-width:320px;">
+        <button type="button" class="btn-primary" onclick="openModal('paciente')">+ Nuevo paciente</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead><tr><th>ID</th><th>Nombre</th><th>Identificación</th><th>Peso</th><th>Edad</th><th>Acciones</th></tr></thead>
+          <tbody id="pac-tb"><tr class="empty-row"><td colspan="6">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+      <div id="pac-pagination" class="pagination" style="display:none;">
+        <button onclick="changePacPage(-1)" id="pac-prev">← Anterior</button>
+        <span class="page-info" id="pac-page-info">1 / 1</span>
+        <button onclick="changePacPage(1)" id="pac-next">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- ==================== MEDICAMENTOS ==================== -->
+    <div id="page-medicamentos" class="page">
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+        <input type="text" id="med-search" placeholder="Filtrar por nombre…" oninput="filterMedicamentos()" style="max-width:320px;">
+        <button type="button" class="btn-primary" onclick="openModal('medicamento')">+ Nuevo medicamento</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead><tr><th>ID</th><th>Nombre</th><th>Dosis mín. (mg/kg)</th><th>Dosis máx. (mg/kg)</th><th>Descripción</th><th>Acciones</th></tr></thead>
+          <tbody id="med-tb"><tr class="empty-row"><td colspan="6">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+      <div id="med-pagination" class="pagination" style="display:none;">
+        <button onclick="changeMedPage(-1)" id="med-prev">← Anterior</button>
+        <span class="page-info" id="med-page-info">1 / 1</span>
+        <button onclick="changeMedPage(1)" id="med-next">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- ==================== MI HISTORIAL ==================== -->
+    <div id="page-historial" class="page">
+      <div class="table-container">
+        <table>
+          <thead><tr><th>Tipo</th><th>Entrada</th><th>Resultado</th><th>Fecha</th></tr></thead>
+          <tbody id="hist-tb"><tr class="empty-row"><td colspan="4">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+      <div id="hist-pagination" class="pagination" style="display:none;">
+        <button onclick="changeHistPage(-1)" id="hist-prev">← Anterior</button>
+        <span class="page-info" id="hist-page-info">1 / 1</span>
+        <button onclick="changeHistPage(1)" id="hist-next">Siguiente →</button>
+      </div>
+    </div>
+
+        <!-- ==================== REPORTES CLÍNICOS ==================== -->
+    <div id="page-reportes" class="page">
+      <div class="card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">📊 Reportes de Conversiones y Seguridad Clínica</h2>
+            <p style="font-size: 13px; color: var(--text2);">Consolidado de dosis calculadas, alertas del semáforo y auditoría de responsabilidad.</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <select id="rep-periodo" onchange="loadReportes()" style="background: var(--bg3); color: var(--text1); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; font-size: 13px;">
+              <option value="todos">Todos los registros</option>
+              <option value="7">Últimos 7 días</option>
+              <option value="30">Últimos 30 días</option>
+            </select>
+            <button type="button" class="btn-primary" onclick="printReport()" style="padding: 8px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+              🖨️ Imprimir / PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-4" style="margin-bottom: 20px;">
+        <div class="m-card" style="border-left: 4px solid #10b981;">
+          <div><div class="m-val" id="rep-kpi-verde" style="color: #10b981;">0</div><div class="m-lbl">Dosis Seguras (🟢)</div></div>
+        </div>
+        <div class="m-card" style="border-left: 4px solid #ef4444;">
+          <div><div class="m-val" id="rep-kpi-rojo" style="color: #ef4444;">0</div><div class="m-lbl">Sobredosificación (🔴)</div></div>
+        </div>
+        <div class="m-card" style="border-left: 4px solid #f59e0b;">
+          <div><div class="m-val" id="rep-kpi-amarillo" style="color: #f59e0b;">0</div><div class="m-lbl">Subdosificación (🟡)</div></div>
+        </div>
+        <div class="m-card" style="border-left: 4px solid #a855f7;">
+          <div><div class="m-val" id="rep-kpi-morado" style="color: #a855f7;">0</div><div class="m-lbl">Dosis Sugeridas (🟣)</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 15px; margin-bottom: 16px;">📜 Auditoría de Registros y Responsabilidad Clínica</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Profesional Resp.</th>
+                <th>Tipo de Cálculo</th>
+                <th>Entrada</th>
+                <th>Resultado</th>
+                <th>Fecha y Hora</th>
+              </tr>
+            </thead>
+            <tbody id="rep-tb"><tr class="empty-row"><td colspan="5">Cargando reportes…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PANEL ADMIN ==================== -->
+    <div id="page-admin" class="page">
+      <div class="table-container">
+        <table>
+          <thead><tr><th>Usuario</th><th>Tipo</th><th>Entrada</th><th>Resultado</th><th>Fecha</th></tr></thead>
+          <tbody id="admin-tb"><tr class="empty-row"><td colspan="5">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+      <div id="admin-pagination" class="pagination" style="display:none;">
+        <button onclick="changeAdminPage(-1)" id="admin-prev">← Anterior</button>
+        <span class="page-info" id="admin-page-info">1 / 1</span>
+        <button onclick="changeAdminPage(1)" id="admin-next">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- ==================== MI PERFIL ==================== -->
+    <div id="page-perfil" class="page">
+      <div class="grid-2">
+        <div class="card" style="text-align:center;">
+          <div id="prof-av" class="avatar" style="width:72px; height:72px; font-size:24px; margin:0 auto 16px;">US</div>
+          <h2 id="prof-nm" style="font-size:20px; margin-bottom:4px;">—</h2>
+          <div id="prof-rl" class="u-rl" style="font-size:13px; margin-bottom:24px;">—</div>
+          <button type="button" class="btn-danger" onclick="doLogout()">🚪 Cerrar sesión</button>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px; margin-bottom:16px;">🔒 Información de cuenta</h3>
+          <div class="p-row"><div class="m-lbl">Usuario</div><div style="font-weight:600; margin-top:2px;" id="prof-user">—</div></div>
+          <div class="p-row"><div class="m-lbl">Rol / Privilegio</div><div style="font-weight:600; margin-top:2px;" id="prof-role">—</div></div>
+          <div class="p-row"><div class="m-lbl">Última conversión</div><div style="font-weight:600; margin-top:2px;" id="prof-last">—</div></div>
+        </div>
+      </div>
+      <div class="grid-4" style="margin-bottom:24px;">
+        <div class="m-card"><div><div class="m-val" id="prof-tot">0</div><div class="m-lbl">Total conversiones</div></div></div>
+        <div class="m-card"><div><div class="m-val" id="prof-hoy">0</div><div class="m-lbl">Hoy</div></div></div>
+        <div class="m-card"><div><div class="m-val" id="prof-sem">0</div><div class="m-lbl">Últimos 7 días</div></div></div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:15px; margin-bottom:16px;">⏱️ Actividad reciente</h3>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Tipo</th><th>Entrada</th><th>Resultado</th><th>Fecha</th></tr></thead>
+            <tbody id="prof-tb"><tr class="empty-row"><td colspan="4">Sin datos.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== MODALES ==================== -->
+<div id="modal-paciente" class="modal-bg">
+  <div class="modal">
+    <div class="m-hd"><h3 id="pac-modal-title">Nuevo paciente</h3><button type="button" onclick="closeModal('paciente')" style="background:none; font-size:18px; color:var(--text2); border:none; cursor:pointer;">✕</button></div>
+    <div class="m-bd">
+      <div id="pac-alert" class="error-banner"></div>
+      <input type="hidden" id="pac-id">
+      <div class="input-group"><label>Nombre completo *</label><input type="text" id="pac-nombre" placeholder="Ej: Juan Pérez"></div>
+      <div class="input-group"><label>Documento de identidad *</label><input type="text" id="pac-ident" placeholder="Ej: 1094060307"></div>
+      <div class="fgrid">
+        <div class="input-group"><label>Peso actual (kg) *</label><input type="number" id="pac-peso" step="0.1" placeholder="70.5"></div>
+        <div class="input-group"><label>Edad</label><input type="number" id="pac-edad" placeholder="35"></div>
+      </div>
+    </div>
+    <div class="m-ft">
+      <button type="button" class="btn-sec" onclick="closeModal('paciente')">Cancelar</button>
+      <button type="button" class="btn-primary" onclick="savePaciente()">Guardar paciente</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-medicamento" class="modal-bg">
+  <div class="modal">
+    <div class="m-hd"><h3 id="med-modal-title">Nuevo medicamento</h3><button type="button" onclick="closeModal('medicamento')" style="background:none; font-size:18px; color:var(--text2); border:none; cursor:pointer;">✕</button></div>
+    <div class="m-bd">
+      <div id="med-alert" class="error-banner"></div>
+      <input type="hidden" id="med-id">
+      <div class="input-group"><label>Nombre genérico *</label><input type="text" id="med-nombre" placeholder="Ej: Amoxicilina"></div>
+      <div class="fgrid">
+        <div class="input-group"><label>Dosis mínima (mg/kg) *</label><input type="number" id="med-min" step="0.01" placeholder="10"></div>
+        <div class="input-group"><label>Dosis máxima (mg/kg) *</label><input type="number" id="med-max" step="0.01" placeholder="15"></div>
+      </div>
+      <div class="input-group"><label>Descripción / indicaciones</label><textarea id="med-desc" rows="3" placeholder="Antibiótico de amplio espectro…"></textarea></div>
+    </div>
+    <div class="m-ft">
+      <button type="button" class="btn-sec" onclick="closeModal('medicamento')">Cancelar</button>
+      <button type="button" class="btn-primary" onclick="saveMedicamento()">Guardar medicamento</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-confirm" class="modal-bg">
+  <div class="modal" style="max-width:380px;">
+    <div class="m-hd"><h3>Confirmar eliminación</h3><button type="button" onclick="closeModal('confirm')" style="background:none; font-size:18px; color:var(--text2); border:none; cursor:pointer;">✕</button></div>
+    <div class="m-bd"><p id="confirm-text" style="font-size:14px; color:var(--text2); line-height:1.6;"></p></div>
+    <div class="m-ft">
+      <button type="button" class="btn-sec" onclick="closeModal('confirm')">Cancelar</button>
+      <button type="button" class="btn-primary" id="confirm-btn" style="background:#EF4444;">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCRIPT COMPLETO (TODAS LAS FUNCIONALIDADES) ==================== -->
+<script src="js/app.js"></script>
+</body>
+</html>

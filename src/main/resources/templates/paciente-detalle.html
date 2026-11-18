@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="es" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+
+    <title>
+        ClinGuard — Detalle del Paciente
+    </title>
+
+    <meta charset="utf-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+
+    <script th:src="@{/js/theme.js}"></script>
+
+</head>
+
+
+<body data-page="pacientes" class="cg-view-paciente-detalle">
+
+
+    <!-- =========================================================
+     SIDEBAR
+========================================================= -->
+
+    <aside id="sidebar">
+
+
+        <div class="sb-brand">
+
+            <div class="sb-logo">
+                <img th:src="@{/img/logo-claro.png}" alt="ClinGuard" class="clinguard-logo logo-claro">
+
+                <img th:src="@{/img/logo-oscuro.png}" alt="ClinGuard" class="clinguard-logo logo-oscuro">
+            </div>
+
+        </div>
+
+
+        <nav class="sb-nav" aria-label="Navegación principal">
+            <a class="nb" th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">
+
+                <i class="bx bx-shield-quarter"></i>
+
+                <span>Panel Admin</span>
+
+            </a>
+
+            <a class="nb" th:href="@{/dashboard}" sec:authorize="!hasRole('ADMIN')"><i class="bx bx-grid-alt"></i><span>Dashboard</span></a>
+<a class="nb" th:href="@{/analisis}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+
+                <i class="bx bx-line-chart"></i>
+
+                <span>
+                    Análisis
+                </span>
+
+            </a>
+
+
+            <a class="nb" th:href="@{/conversiones}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+
+                <i class="bx bx-transfer"></i>
+
+                <span>
+                    Conversiones Médicas
+                </span>
+
+            </a>
+
+
+            <a class="nb active" th:href="@{/pacientes}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+
+                <i class="bx bx-user"></i>
+
+                <span>
+                    Pacientes
+                </span>
+
+            </a>
+
+
+            <a class="nb" th:href="@{/citas}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+
+                <i class="bx bx-calendar"></i>
+
+                <span>
+                    Citas
+                </span>
+
+            </a>
+
+
+            <a class="nb" th:href="@{/historial}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+
+                <i class="bx bx-notepad"></i>
+
+                <span>
+                    Historial Médico
+                </span>
+
+            </a>
+
+
+            <a class="nb" th:href="@{/medicamentos}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+
+                <i class="bx bx-capsule"></i>
+
+                <span>
+                    Medicamentos
+                </span>
+
+            </a>
+
+
+            <a class="nb" th:href="@{/reportes}" sec:authorize="hasAnyRole('ADMIN','MEDICO')">
+
+                <i class="bx bx-file"></i>
+
+                <span>
+                    Reportes
+                </span>
+
+            </a>
+
+
+            
+
+            <!-- REGISTRAR USUARIO: visible únicamente para ADMIN -->
+            <a class="nb" th:href="@{/admin/usuarios/nuevo}" sec:authorize="hasRole('ADMIN')">
+                <i class="bx bx-user-plus"></i>
+                <span>Registrar usuario</span>
+            </a>
+
+
+
+
+            <a th:href="@{/notificaciones}" href="/notificaciones" class="nb">
+                <i class='bx bx-bell'></i>
+                <span>Notificaciones</span>
+                <span class="notif-count" th:if="${noLeidas != null and noLeidas > 0}" th:text="${noLeidas}">
+                </span>
+            </a>
+
+
+
+            <a class="nb" th:href="@{/perfil}">
+
+                <i class="bx bx-user-circle"></i>
+
+                <span>
+                    Mi Perfil
+                </span>
+
+            </a>
+
+
+        </nav>
+
+
+        <!-- USUARIO -->
+        <a class="sb-user sb-user-clickable" th:href="@{/perfil}">
+
+            <div class="avatar">
+
+                <i class="bx bx-user"></i>
+
+            </div>
+
+            <div class="u-info">
+
+                <div class="u-nm" sec:authentication="name">
+
+                    Usuario
+
+                </div>
+
+                <div class="u-rl" sec:authorize="hasRole('ADMIN')">
+
+                    Administrador
+
+                </div>
+
+                <div class="u-rl" sec:authorize="hasRole('MEDICO')">
+
+                    Médico
+
+                </div>
+
+                <div class="u-rl" sec:authorize="hasRole('ENFERMERO')">
+
+                    Enfermero
+
+                </div>
+
+            </div>
+
+        </a>
+
+
+        <!-- LOGOUT -->
+        <form th:action="@{/logout}" method="post">
+
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <button type="submit" class="logout-link cg-inline-paciente-detalle-1" >
+
+                <i class="bx bx-log-out"></i>
+
+                Salir
+
+            </button>
+
+        </form>
+
+
+    </aside>
+
+
+
+    <!-- =========================================================
+     CONTENIDO
+========================================================= -->
+
+    <div id="main-content">
+
+
+        <header>
+
+            <div class="h-title">
+
+                <a th:href="@{/pacientes}"  class="cg-inline-paciente-detalle-2">
+
+                    <i class="bx bx-left-arrow-alt"></i>
+
+                </a>
+
+                Detalle del paciente
+
+            </div>
+
+        </header>
+
+
+
+        <div class="main-inner">
+
+
+            <div class="page active">
+
+
+                <!-- =================================================
+                 CABECERA PACIENTE
+            ================================================== -->
+
+                <div class="card">
+
+
+                    <div  class="cg-inline-paciente-detalle-3">
+
+
+                        <div  class="cg-inline-paciente-detalle-4">
+
+
+                            <div class="cita-avatar cg-inline-paciente-detalle-5" >
+
+                                <i class="bx bx-user"></i>
+
+                            </div>
+
+
+                            <div>
+
+
+                                <h2 class="section-title-compact cg-inline-paciente-detalle-6" >
+
+                                    <span th:text="${paciente.nombres}">
+
+                                        Nombres
+
+                                    </span>
+
+                                    <span th:text="${paciente.apellidos}">
+
+                                        Apellidos
+
+                                    </span>
+
+                                </h2>
+
+
+                                <p class="muted-text-sm">
+
+                                    <span th:text="${paciente.tipoDocumento}">
+
+                                        CC
+
+                                    </span>
+
+                                    -
+
+                                    <span th:text="${paciente.documento}">
+
+                                        000000000
+
+                                    </span>
+
+                                </p>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                        <div  class="cg-inline-paciente-detalle-7">
+
+
+                            <!-- EDITAR -->
+                            <a class="btn-primary" th:href="@{/pacientes/editar/{id}(id=${paciente.id})}"
+                                sec:authorize="hasAnyRole('ADMIN','MEDICO')">
+
+                                <i class="bx bx-edit-alt"></i>
+
+                                Editar
+
+                            </a>
+
+
+                            <!-- HISTORIAL -->
+                            <a class="btn-sec" th:href="@{/historial/paciente/{id}(id=${paciente.id})}"
+                                sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+
+                                <i class="bx bx-notepad"></i>
+
+                                Historial
+
+                            </a>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+
+                <!-- VINCULACIÓN SEGURA DE CUENTA: SOLO ADMIN -->
+                <section class="card" sec:authorize="hasRole('ADMIN')" aria-labelledby="cg-vincular-titulo">
+                    <div class="card-toolbar">
+                        <div>
+                            <h3 id="cg-vincular-titulo" class="section-title-compact">
+                                <i class="bx bx-link" aria-hidden="true"></i>
+                                Vincular cuenta de usuario
+                            </h3>
+                            <p class="muted-text-sm">
+                                Relaciona este expediente con una cuenta existente de rol USUARIO.
+                                Verifica la identidad del titular antes de realizar el vínculo.
+                            </p>
+                        </div>
+                        <div class="cita-stat-icon cita-stat-blue"><i class="bx bx-user-check" aria-hidden="true"></i></div>
+                    </div>
+
+                    <p th:if="${exito != null}" class="cg-peso-verified" role="status" th:text="${exito}"></p>
+                    <p th:if="${error != null}" class="cg-peso-pending" role="alert" th:text="${error}"></p>
+
+                    <form method="post"
+                          th:action="@{/api/pacientes/vincular-cuenta/{id}(id=${paciente.id})}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="input-group">
+                            <label for="cgNombreUsuarioVincular">Nombre de usuario de la cuenta</label>
+                            <div class="input-wrapper">
+                                <i class="bx bx-user" aria-hidden="true"></i>
+                                <input id="cgNombreUsuarioVincular"
+                                       type="text" name="nombreUsuario"
+                                       maxlength="100" autocomplete="off"
+                                       placeholder="Ej.: alex1216" required>
+                            </div>
+                        </div>
+                        <label class="muted-text-sm" for="cgConfirmarVinculo">
+                            <input id="cgConfirmarVinculo" type="checkbox" required>
+                            Confirmo que verifiqué la identidad y que esta cuenta corresponde a este paciente.
+                        </label>
+                        <div>
+                            <button type="submit" class="btn-primary">
+                                <i class="bx bx-link" aria-hidden="true"></i>
+                                Vincular cuenta
+                            </button>
+                        </div>
+                    </form>
+                    <p class="muted-text-sm">Solo se admiten cuentas USUARIO activas. No se alteran historiales ni citas existentes.</p>
+                </section>
+
+                <!-- =================================================
+                 INFORMACIÓN PERSONAL
+            ================================================== -->
+
+                <div class="card cg-inline-paciente-detalle-8" >
+
+
+                    <div class="card-toolbar">
+
+
+                        <div>
+
+
+                            <h3 class="section-title-compact">
+
+                                Información personal
+
+                            </h3>
+
+
+                            <p class="muted-text-sm">
+
+                                Datos básicos de identificación
+                                del paciente.
+
+                            </p>
+
+
+                        </div>
+
+
+                        <div class="cita-stat-icon cita-stat-blue">
+
+                            <i class="bx bx-id-card"></i>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div  class="cg-inline-paciente-detalle-9">
+
+
+                        <!-- TIPO DOCUMENTO -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Tipo de documento
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.tipoDocumento != null
+                                and !paciente.tipoDocumento.isEmpty()
+                                ? paciente.tipoDocumento
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-10">
+
+                                CC
+
+                            </strong>
+
+
+                        </div>
+
+
+
+                        <!-- DOCUMENTO -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Documento
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.documento != null
+                                and !paciente.documento.isEmpty()
+                                ? paciente.documento
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-11">
+
+                                000000000
+
+                            </strong>
+
+
+                        </div>
+
+
+
+                        <!-- FECHA -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Fecha de nacimiento
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.fechaNacimiento != null
+                                ? paciente.fechaNacimiento
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-12">
+
+                                Sin registrar
+
+                            </strong>
+
+
+                        </div>
+
+
+
+                        <!-- SEXO -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Sexo
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.sexo != null
+                                and !paciente.sexo.isEmpty()
+                                ? paciente.sexo
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-13">
+
+                                Sin registrar
+
+                            </strong>
+
+
+                        </div>
+
+
+
+                        <!-- ESTADO -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Estado
+
+                            </span>
+
+
+                            <div  class="cg-inline-paciente-detalle-14">
+
+
+                                <span class="cita-status cita-status-confirmada" th:if="${paciente.activo}">
+
+                                    Activo
+
+                                </span>
+
+
+                                <span class="cita-status cita-status-cancelada" th:unless="${paciente.activo}">
+
+                                    Inactivo
+
+                                </span>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+
+                <!-- DATOS CLÍNICOS PARA DOSIFICACIÓN -->
+                <section class="card cg-dosificacion-card" aria-labelledby="cgPesoTitulo">
+                    <div class="card-toolbar">
+                        <div>
+                            <h3 id="cgPesoTitulo" class="section-title-compact">Datos clínicos para dosificación</h3>
+                            <p class="muted-text-sm">El peso debe ser verificado por un médico antes de utilizarse en cálculos por peso.</p>
+                        </div>
+                        <i class="bx bx-check-shield"></i>
+                    </div>
+                    <p th:if="${exito}" sec:authorize="!hasRole('ADMIN')" class="cg-peso-verified" th:text="${exito}"></p>
+                    <p th:if="${error}" sec:authorize="!hasRole('ADMIN')" class="cg-peso-pending" th:text="${error}"></p>
+                    <dl class="cg-dosificacion-info">
+                        <div><dt>Peso registrado</dt><dd th:text="${paciente.peso != null ? paciente.peso + ' kg' : 'Sin registrar'}">Sin registrar</dd></div>
+                        <div><dt>Estado</dt><dd th:text="${paciente.pesoVerificado ? 'Verificado' : 'No verificado'}">No verificado</dd></div>
+                        <div><dt>Fecha de medición</dt><dd th:text="${paciente.fechaMedicionPeso != null ? paciente.fechaMedicionPeso : 'Sin registrar'}">Sin registrar</dd></div>
+                        <div><dt>Médico verificador</dt><dd th:text="${paciente.profesionalVerificadorPeso != null ? paciente.profesionalVerificadorPeso : 'Sin registrar'}">Sin registrar</dd></div>
+                    </dl>
+                    <form sec:authorize="hasRole('MEDICO')" class="cg-peso-form" method="post"
+                          th:action="@{/pacientes/ver/{id}/verificar-peso(id=${paciente.id})}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <label for="pesoDosificacion">Peso medido (kg)
+                            <input id="pesoDosificacion" name="pesoKg" type="number" min="0.01" max="500" step="0.01"
+                                   th:value="${paciente.peso}" required>
+                        </label>
+                        <label for="fechaMedicionPeso">Fecha de medición
+                            <input id="fechaMedicionPeso" name="fechaMedicion" type="date" required>
+                        </label>
+                        <button type="submit" class="btn-primary">Verificar y guardar peso</button>
+                    </form>
+                    <p sec:authorize="!hasRole('MEDICO')" class="muted-text-sm">Solo un médico puede verificar el peso para dosificación.</p>
+                </section>
+
+                <!-- =================================================
+                 INFORMACIÓN CLÍNICA
+            ================================================== -->
+
+                <div class="card cg-inline-paciente-detalle-15" >
+
+
+                    <div class="card-toolbar">
+
+
+                        <div>
+
+
+                            <h3 class="section-title-compact">
+
+                                Información clínica
+
+                            </h3>
+
+
+                            <p class="muted-text-sm">
+
+                                Información general utilizada
+                                durante la atención médica.
+
+                            </p>
+
+
+                        </div>
+
+
+                        <div class="cita-stat-icon cita-stat-purple">
+
+                            <i class="bx bx-plus-medical"></i>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div  class="cg-inline-paciente-detalle-16">
+
+
+                        <!-- SANGRE -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Tipo de sangre
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.tipoSangre != null
+                                and !paciente.tipoSangre.isEmpty()
+                                ? paciente.tipoSangre
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-17">
+
+                                Sin registrar
+
+                            </strong>
+
+
+                        </div>
+
+
+
+                        <!-- EPS -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                EPS
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.eps != null
+                                and !paciente.eps.isEmpty()
+                                ? paciente.eps
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-18">
+
+                                Sin registrar
+
+                            </strong>
+
+
+                        </div>
+
+
+                        <!-- PESO -->
+                        <div>
+                            <span class="muted-text-sm">Peso</span>
+                            <strong 
+                                    th:text="${paciente.peso != null ? paciente.peso + ' kg' : 'Sin registrar'}" class="cg-inline-paciente-detalle-19">Sin registrar</strong>
+                        </div>
+
+                        <!-- ESTATURA -->
+                        <div>
+                            <span class="muted-text-sm">Estatura</span>
+                            <strong 
+                                    th:text="${paciente.estatura != null ? paciente.estatura + ' cm' : 'Sin registrar'}" class="cg-inline-paciente-detalle-20">Sin registrar</strong>
+                        </div>
+
+                        <!-- IMC -->
+                        <div>
+                            <span class="muted-text-sm">Índice de masa corporal (IMC)</span>
+                            <strong 
+                                    th:text="${paciente.calcularImc() != null ? paciente.calcularImc() + ' kg/m²' : 'Sin calcular'}" class="cg-inline-paciente-detalle-21">Sin calcular</strong>
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                 CONTACTO
+            ================================================== -->
+
+                <div class="card cg-inline-paciente-detalle-22" >
+
+
+                    <div class="card-toolbar">
+
+
+                        <div>
+
+
+                            <h3 class="section-title-compact">
+
+                                Datos de contacto
+
+                            </h3>
+
+
+                            <p class="muted-text-sm">
+
+                                Información para comunicación
+                                con el paciente.
+
+                            </p>
+
+
+                        </div>
+
+
+                        <div class="cita-stat-icon cita-stat-green">
+
+                            <i class="bx bx-phone"></i>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div  class="cg-inline-paciente-detalle-23">
+
+
+                        <!-- TELÉFONO -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Teléfono
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.telefono != null
+                                and !paciente.telefono.isEmpty()
+                                ? paciente.telefono
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-24">
+
+                                Sin registrar
+
+                            </strong>
+
+
+                        </div>
+
+
+
+                        <!-- CORREO -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Correo electrónico
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.correo != null
+                                and !paciente.correo.isEmpty()
+                                ? paciente.correo
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-25">
+
+                                Sin registrar
+
+                            </strong>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                 CONTACTO EMERGENCIA
+            ================================================== -->
+
+                <div class="card cg-inline-paciente-detalle-26" >
+
+
+                    <div class="card-toolbar">
+
+
+                        <div>
+
+
+                            <h3 class="section-title-compact">
+
+                                Contacto de emergencia
+
+                            </h3>
+
+
+                            <p class="muted-text-sm">
+
+                                Persona de referencia para
+                                situaciones de emergencia.
+
+                            </p>
+
+
+                        </div>
+
+
+                        <div class="cita-stat-icon cita-stat-orange">
+
+                            <i class="bx bx-phone-call"></i>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div  class="cg-inline-paciente-detalle-27">
+
+
+                        <!-- CONTACTO -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Nombre del contacto
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.contactoEmergencia != null
+                                and !paciente.contactoEmergencia.isEmpty()
+                                ? paciente.contactoEmergencia
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-28">
+
+                                Sin registrar
+
+                            </strong>
+
+
+                        </div>
+
+
+
+                        <!-- TELEFONO -->
+                        <div>
+
+
+                            <span class="muted-text-sm">
+
+                                Teléfono de emergencia
+
+                            </span>
+
+
+                            <strong  th:text="${paciente.telefonoEmergencia != null
+                                and !paciente.telefonoEmergencia.isEmpty()
+                                ? paciente.telefonoEmergencia
+                                : 'Sin registrar'}" class="cg-inline-paciente-detalle-29">
+
+                                Sin registrar
+
+                            </strong>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                 ACCIONES RÁPIDAS
+            ================================================== -->
+
+                <div class="card cg-inline-paciente-detalle-30" >
+
+
+                    <div class="card-toolbar">
+
+
+                        <div>
+
+
+                            <h3 class="section-title-compact">
+
+                                Acciones del paciente
+
+                            </h3>
+
+
+                            <p class="muted-text-sm">
+
+                                Accede rápidamente a las funciones
+                                relacionadas con este paciente.
+
+                            </p>
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div  class="cg-inline-paciente-detalle-31">
+
+
+                        <!-- HISTORIAL -->
+                        <a class="btn-primary" th:href="@{/historial/paciente/{id}(id=${paciente.id})}"
+                            sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+
+                            <i class="bx bx-notepad"></i>
+
+                            Ver historial
+
+                        </a>
+
+
+                        <!-- EDITAR -->
+                        <a class="btn-sec" th:href="@{/pacientes/editar/{id}(id=${paciente.id})}"
+                            sec:authorize="hasAnyRole('ADMIN','MEDICO')">
+
+                            <i class="bx bx-edit-alt"></i>
+
+                            Editar paciente
+
+                        </a>
+
+
+                        <!-- VOLVER -->
+                        <a class="btn-sec" th:href="@{/pacientes}">
+
+                            <i class="bx bx-arrow-back"></i>
+
+                            Volver a pacientes
+
+                        </a>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</body>
+
+</html>

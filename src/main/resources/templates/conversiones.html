@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+
+<html data-theme="dark" lang="es" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+
+    <title>
+        ClinGuard — Conversiones Médicas
+    </title>
+
+    <meta charset="utf-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" th:href="@{/css/styles.css(v=conv-validacion-20261117)}">
+
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <script th:src="@{/js/theme.js}"></script>
+
+    
+</head>
+
+<body data-page="conversiones" class="cg-view-conversiones">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+        <div class="sb-brand">
+            <div class="sb-logo">
+                <img th:src="@{/img/logo-claro.png}" alt="ClinGuard" class="clinguard-logo logo-claro">
+                <img th:src="@{/img/logo-oscuro.png}" alt="ClinGuard" class="clinguard-logo logo-oscuro">
+            </div>
+        </div>
+
+        <nav class="sb-nav" aria-label="Navegación principal">
+            <a class="nb" th:href="@{/admin}" sec:authorize="hasRole('ADMIN')"><i class="bx bx-shield-quarter"></i><span>Panel Admin</span></a>
+
+            <a class="nb" th:href="@{/dashboard}" sec:authorize="!hasRole('ADMIN')"><i class="bx bx-grid-alt"></i><span>Dashboard</span></a>
+
+            <a class="nb" th:href="@{/analisis}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i class="bx bx-line-chart"></i><span>Análisis</span></a>
+            <a class="nb active" th:href="@{/conversiones}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i class="bx bx-transfer"></i><span>Conversiones Médicas</span></a>
+            <a class="nb" th:href="@{/pacientes}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i class="bx bx-user"></i><span>Pacientes</span></a>
+            <a class="nb" th:href="@{/citas}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i class="bx bx-calendar"></i><span>Citas</span></a>
+            <a class="nb" th:href="@{/historial}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i class="bx bx-notepad"></i><span>Historial Médico</span></a>
+            <a class="nb" th:href="@{/medicamentos}" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')"><i class="bx bx-capsule"></i><span>Medicamentos</span></a>
+            <a class="nb" th:href="@{/reportes}" sec:authorize="hasAnyRole('ADMIN','MEDICO')"><i class="bx bx-file"></i><span>Reportes</span></a>
+            
+            <a class="nb" th:href="@{/admin/usuarios/nuevo}" sec:authorize="hasRole('ADMIN')"><i class="bx bx-user-plus"></i><span>Registrar usuario</span></a>
+            <a th:href="@{/notificaciones}" href="/notificaciones" class="nb"><i class='bx bx-bell'></i><span>Notificaciones</span><span class="notif-count" th:if="${noLeidas != null and noLeidas > 0}" th:text="${noLeidas}"></span></a>
+            <a class="nb" th:href="@{/perfil}"><i class="bx bx-user-circle"></i><span>Mi Perfil</span></a>
+        </nav>
+
+        <a class="sb-user sb-user-clickable" th:href="@{/perfil}">
+            <div class="avatar"><i class="bx bx-user"></i></div>
+            <div class="u-info">
+                <div class="u-nm" th:text="${#authentication.name}">Usuario</div>
+                <div class="u-rl" sec:authorize="hasRole('ADMIN')">Administrador</div>
+                <div class="u-rl" sec:authorize="hasRole('MEDICO')">Médico</div>
+                <div class="u-rl" sec:authorize="hasRole('ENFERMERO')">Enfermero</div>
+            </div>
+        </a>
+
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button type="submit" class="logout-link cg-inline-conversiones-1" >
+                <i class="bx bx-log-out"></i> Salir
+            </button>
+        </form>
+    </aside>
+
+
+    <!-- CONTENIDO -->
+    <div id="main-content">
+        <header>
+            <div class="h-title">Conversiones Médicas</div>
+        </header>
+
+        <div class="main-inner">
+            <div class="page active" id="page-conversiones">
+
+                <!-- CABECERA -->
+                <div class="card">
+                    <div class="card-toolbar">
+                        <div>
+                            <h2 class="section-title-compact">Conversor de unidades médicas</h2>
+                            <p class="muted-text-sm" sec:authorize="hasRole('MEDICO')">Realiza conversiones de unidades utilizadas en procedimientos y cálculos clínicos.</p>
+                            <p class="muted-text-sm" sec:authorize="hasRole('ENFERMERO')">Utiliza las herramientas de conversión como apoyo en procedimientos de enfermería.</p>
+                            <p class="muted-text-sm" sec:authorize="hasRole('ADMIN')">Accede a las herramientas de conversión disponibles en ClinGuard.</p>
+                        </div>
+                        <div class="cita-stat-icon cita-stat-blue">
+                            <i class="bx bx-transfer-alt"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TARJETAS COMO PESTAÑAS -->
+                <div class="grid-4 cg-inline-conversiones-2" >
+                    <div class="m-card tab-trigger active" onclick="showTab('masa', this)">
+                        <div>
+                            <div class="m-val"><i class="bx bx-dumbbell"></i></div>
+                            <div class="m-lbl">Masa</div>
+                        </div>
+                    </div>
+                    <div class="m-card tab-trigger" onclick="showTab('volumen', this)">
+                        <div>
+                            <div class="m-val"><i class="bx bx-vial"></i></div>
+                            <div class="m-lbl">Volumen</div>
+                        </div>
+                    </div>
+                    <div class="m-card tab-trigger" onclick="showTab('dosificacion', this)">
+                        <div>
+                            <div class="m-val"><i class="bx bx-calculator"></i></div>
+                            <div class="m-lbl">Dosificación</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SELECCIONAR CONVERSIÓN -->
+                <div class="card cg-inline-conversiones-3" >
+                    <div class="card-toolbar">
+                        <div>
+                            <h3 class="section-title-compact">Selecciona una conversión</h3>
+                            <p class="muted-text-sm">Haz clic sobre la operación que deseas realizar.</p>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA: MASA -->
+                    <div id="tab-masa" class="tab-content active">
+                        <h4  class="cg-inline-conversiones-4"><i class="bx bx-dumbbell"></i> Masa y peso</h4>
+                        <div  class="cg-inline-conversiones-5">
+                            <div class="copt sel" data-op="g-mg">Gramos → Miligramos <span class="muted-text-sm">g → mg</span></div>
+                            <div class="copt" data-op="mg-g">Miligramos → Gramos <span class="muted-text-sm">mg → g</span></div>
+                            <div class="copt" data-op="ug-mg">Microgramos → Miligramos <span class="muted-text-sm">µg → mg</span></div>
+                            <div class="copt" data-op="kg-g">Kilogramos → Gramos <span class="muted-text-sm">kg → g</span></div>
+                            <div class="copt" data-op="g-kg">Gramos → Kilogramos <span class="muted-text-sm">g → kg</span></div>
+                            <div class="copt" data-op="mg-kg">Miligramos → Kilogramos <span class="muted-text-sm">mg → kg</span></div>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA: VOLUMEN -->
+                    <div id="tab-volumen" class="tab-content">
+                        <h4  class="cg-inline-conversiones-6"><i class="bx bx-vial"></i> Volumen</h4>
+                        <div  class="cg-inline-conversiones-7">
+                            <div class="copt" data-op="ml-l">Mililitros → Litros <span class="muted-text-sm">mL → L</span></div>
+                            <div class="copt" data-op="l-ml">Litros → Mililitros <span class="muted-text-sm">L → mL</span></div>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA: DOSIFICACIÓN -->
+                    <div id="tab-dosificacion" class="tab-content">
+                        <h4  class="cg-inline-conversiones-8"><i class="bx bx-capsule"></i> Dosis y peso</h4>
+                        <div  class="cg-inline-conversiones-9">
+                            <div class="copt" data-op="dosis-mg-kg">Calcular mg/kg <span class="muted-text-sm">dosis total ÷ peso</span></div>
+                            <div class="copt" data-op="dosis-ug-kg">Calcular µg/kg <span class="muted-text-sm">dosis total ÷ peso</span></div>
+                            <div class="copt" data-op="dosis-total">Calcular dosis total <span class="muted-text-sm">dosis/kg × peso</span></div>
+                            <div class="copt" data-op="dosis-volumen">Volumen a administrar <span class="muted-text-sm">dosis requerida y presentación</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÁREA DEL CÁLCULO -->
+                <div  class="cg-inline-conversiones-10">
+
+                    <!-- DATOS -->
+                    <div class="card">
+                        <div class="card-toolbar">
+                            <div>
+                                <h3 class="section-title-compact">Datos de conversión</h3>
+                                <p class="muted-text-sm">Ingresa el valor y vincula al paciente.</p>
+                            </div>
+                        </div>
+
+                        <!-- VINCULACIÓN -->
+                        <div class="conv-patient-panel" sec:authorize="hasAnyRole('ADMIN','MEDICO','ENFERMERO')">
+                            <div class="conv-patient-grid">
+                                <div class="form-group">
+                                    <label for="conv-medicamento">Fármaco / Medicamento</label>
+                                    <select id="conv-medicamento">
+                                        <option value="">Seleccionar medicamento</option>
+                                        <option th:each="m : ${medicamentosConversion}"
+                                                th:value="${m.id}"
+                                                th:data-min="${m.min}"
+                                                th:data-max="${m.max}"
+                                                th:text="${m.nombre + (m.presentacion != null and !m.presentacion.isEmpty() ? ' · ' + m.presentacion : '')}">Medicamento</option>
+                                    </select>
+                                    <small id="conv-medicamento-estado" class="muted-text-sm" role="status" aria-live="polite">
+                                        Cargando medicamentos registrados...
+                                    </small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="conv-paciente">Paciente</label>
+                                    <select id="conv-paciente">
+                                        <option value="">Seleccionar paciente</option>
+                                        <option th:each="p : ${pacientesConversion}" th:value="${p.id}"
+                                            th:text="${p.nombre + ' · ' + p.documento}" th:data-peso="${p.pesoKg}">Paciente de ejemplo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VALORES (Añadido oninput para permitir comas) -->
+                        <div class="form-group cg-inline-conversiones-11" >
+                            <label for="conv-val">Valor a convertir / Dosis</label>
+                            <input id="conv-val" type="text" inputmode="decimal" oninput="this.value = this.value.replace(',', '.')" placeholder="Ej: 500 o 33,1">
+                        </div>
+
+                        <p id="conv-operacion-activa" class="muted-text-sm" role="status" aria-live="polite">
+                            Operación seleccionada: Gramos → Miligramos (g → mg). No requiere paciente ni peso.
+                        </p>
+                        <p id="conv-aviso-peso" class="muted-text-sm" hidden>
+                            Esta operación necesita un paciente con peso verificado en su expediente.
+                            No se aceptan pesos escritos manualmente.
+                        </p>
+
+                        <div class="form-group cg-inline-conversiones-13" >
+                            <label for="dosisDisponible">Dosis disponible</label>
+                            <input id="dosisDisponible" type="number" step="any" min="0" placeholder="Ej: 250">
+                        </div>
+
+                        <div class="form-group cg-inline-conversiones-14" >
+                            <label for="volumenDisponible">Volumen disponible (mL)</label>
+                            <input id="volumenDisponible" type="number" step="any" min="0" placeholder="Ej: 5">
+                        </div>
+
+                        <!-- Acciones independientes: calcular no registra; validar crea evento de auditoría; guardar persiste la conversión. -->
+                        <div class="conv-actions" role="group" aria-label="Acciones del conversor">
+                            <button type="button" id="conv-calcular" class="btn-primary conversion-submit"><i class="bx bx-calculator"></i> Calcular conversión</button>
+                            <button type="button" id="conv-validar" class="btn-primary" disabled><i class="bx bx-check-shield"></i> Validar dosis</button>
+                            <button type="button" id="conv-guardar" class="btn-primary" disabled><i class="bx bx-save"></i> Guardar conversión</button>
+                        </div>
+                        <span id="conv-estado-guardado" class="conv-save-msg cg-inline-conversiones-16" role="status" aria-live="polite" ></span>
+                    </div>
+
+                    <!-- RESULTADO -->
+                    <div class="card">
+                        <div class="card-toolbar">
+                            <div>
+                                <h3 class="section-title-compact">Resultado</h3>
+                                <p class="muted-text-sm">El cálculo no se guarda automáticamente. Validar dosis crea un evento de auditoría independiente de las conversiones guardadas.</p>
+                            </div>
+                            <div class="cita-stat-icon cita-stat-green">
+                                <i class="bx bx-check-circle"></i>
+                            </div>
+                        </div>
+
+                        <div  class="cg-inline-conversiones-17">
+                            
+                            <!-- SEMAFORO CLINICO -->
+                            <div class="semaforo-container" id="semaforo-widget" title="Semaforo Clinico de Seguridad Farmacologica">
+                                <div class="sem-circle" id="sem-red" title="Por encima del rango configurado"></div>
+                                <div class="sem-circle" id="sem-yellow" title="Por debajo del rango configurado"></div>
+                                <div class="sem-circle" id="sem-green" title="Dentro del rango configurado"></div>
+                                <div class="sem-circle" id="sem-blue" title="Indicador no utilizado para validar dosis"></div>
+                            </div>
+                            
+                            <div class="res-big cg-inline-conversiones-18" id="res-val" >
+                                —
+                            </div>
+
+                            <div id="semaforo-observacion" class="semaforo-obs"></div>
+                            <section id="conv-validacion-detalle" class="conv-validation-detail" hidden aria-live="polite" aria-label="Resultado de la validación de dosis">
+                                <div class="conv-validation-heading">
+                                    <i class="bx bx-info-circle" aria-hidden="true"></i>
+                                    <strong id="conv-validacion-titulo">Resultado de la comparación</strong>
+                                </div>
+                                <p id="conv-validacion-descripcion" class="conv-validation-description"></p>
+                                <div class="conv-validation-values">
+                                    <div><span>Dosis evaluada</span><strong id="conv-validacion-dosis">—</strong></div>
+                                    <div><span>Límite inferior</span><strong id="conv-validacion-minimo">—</strong></div>
+                                    <div><span>Límite superior</span><strong id="conv-validacion-maximo">—</strong></div>
+                                </div>
+                                <p class="conv-validation-disclaimer">Comparación matemática con parámetros de prueba o configurados. No certifica seguridad clínica.</p>
+                            </section>
+
+                            
+                            <div class="res-sub cg-inline-conversiones-19" id="res-unit" >
+                                Selecciona una conversión e ingresa un valor.
+                            </div>
+
+                            <!-- CONFIRMACIÓN DE GUARDADO DE CONVERSIÓN -->
+                            <div id="audit-box" class="audit-signature">
+                                <i class="bx bx-lock-alt"></i> <strong>Conversión guardada</strong><br>
+                                Esta conversión fue guardada por: <span id="audit-user" class="audit-user"></span><br>
+                                Fecha y hora: <span id="audit-time"  class="cg-inline-conversiones-20"></span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- GUÍA DOSIFICACIÓN -->
+                <div class="card cg-inline-conversiones-21" >
+                    <div class="card-toolbar">
+                        <div>
+                            <h3 class="section-title-compact">¿Cómo usar los cálculos de dosis?</h3>
+                        </div>
+                    </div>
+                    <div  class="cg-inline-conversiones-22">
+                        <div>
+                            <strong>Calcular mg/kg o µg/kg</strong>
+                            <p class="muted-text-sm">En “Valor” escribe la dosis total. El cálculo por peso requiere el peso verificado del expediente del paciente.</p>
+                        </div>
+                        <div>
+                            <strong>Calcular dosis total</strong>
+                            <p class="muted-text-sm">En “Valor” escribe la dosis indicada por kilogramo y selecciona un paciente con peso verificado en su expediente.</p>
+                        </div>
+                        <div>
+                            <strong>Volumen a administrar</strong>
+                            <p class="muted-text-sm">En “Valor” escribe la dosis requerida. Luego completa dosis disponible y volumen disponible.</p>
+                        </div>
+                        <div>
+                            <strong>Conversiones simples</strong>
+                            <p class="muted-text-sm">Selecciona una operación de las pestañas Masa o Volumen. Solo necesitas el campo “Valor”; no se requiere paciente ni peso. El botón Guardar es opcional.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AVISO -->
+                <div class="card cg-inline-conversiones-23" >
+                    <div  class="cg-inline-conversiones-24">
+                        <i class="bx bx-info-circle cg-inline-conversiones-25" ></i>
+                        <div>
+                            <h3 class="section-title-compact cg-inline-conversiones-26" >Herramienta de apoyo</h3>
+                            <p class="muted-text-sm">Verifica siempre las unidades, concentraciones y valores utilizados antes de aplicar cualquier resultado en un procedimiento clínico.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Lógica propia del conversor: acciones separadas y sin guardado implícito. -->
+    <script th:inline="javascript">
+        const currentUser = /*[[${#authentication.name}]]*/ 'Usuario';
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+        function showTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-trigger').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            element.classList.add('active');
+            // Selección de operación visible, sin ejecutar cálculos automáticos.
+            const primer = document.querySelector('#tab-' + tabId + ' .copt');
+            if (primer) primer.click();
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const $ = (id) => document.getElementById(id);
+            const medicamento = $('conv-medicamento'), paciente = $('conv-paciente');
+            const valor = $('conv-val');
+            const avisoPeso = $('conv-aviso-peso'), operacionActiva = $('conv-operacion-activa');
+            const dosisDisponible = $('dosisDisponible'), volumenDisponible = $('volumenDisponible');
+            const calcular = $('conv-calcular'), validar = $('conv-validar'), guardar = $('conv-guardar');
+            const estado = $('conv-estado-guardado'), resultado = $('res-val'), unidad = $('res-unit');
+            const observacion = $('semaforo-observacion'), auditoria = $('audit-box');
+            const detalleValidacion = $('conv-validacion-detalle');
+            const tituloValidacion = $('conv-validacion-titulo');
+            const descripcionValidacion = $('conv-validacion-descripcion');
+            const dosisValidacion = $('conv-validacion-dosis');
+            const minimoValidacion = $('conv-validacion-minimo');
+            const maximoValidacion = $('conv-validacion-maximo');
+            const circulos = [...document.querySelectorAll('.sem-circle')];
+            const estadoMedicamentos = $('conv-medicamento-estado');
+            let calculo = null;
+            let validacion = null;
+            let consultaEnCurso = false;
+            let operacion = document.querySelector('.copt.sel')?.dataset.op || 'g-mg';
+            const operacionesPorPeso = new Set(['dosis-mg-kg', 'dosis-ug-kg', 'dosis-total']);
+            const operacionesDosisValidables = new Set(['g-mg', 'mg-g', 'ug-mg']);
+            let revision = 0;
+
+            function mensaje(texto, error = false) {
+                estado.textContent = texto;
+                estado.style.color = error ? '#ff8b8b' : '#9ac9d1';
+            }
+            function resetear() {
+                revision++;
+                calculo = null;
+                validacion = null;
+                detalleValidacion.hidden = true;
+                detalleValidacion.className = 'conv-validation-detail';
+                validar.disabled = true;
+                guardar.disabled = true;
+                resultado.textContent = '—';
+                unidad.textContent = 'Pulsa Calcular conversión.';
+                observacion.textContent = 'La conversión matemática no acredita seguridad clínica.';
+                observacion.className = 'semaforo-obs';
+                circulos.forEach(el => el.className = 'sem-circle');
+                auditoria.style.display = 'none';
+                mensaje('');
+            }
+            function mostrarCampo(el, visible) {
+                const grupo = el?.closest('.form-group');
+                if (grupo) { grupo.hidden = !visible; grupo.style.display = visible ? '' : 'none'; }
+                if (el) el.disabled = !visible;
+            }
+            function configurarOperacion() {
+                const porPeso = operacionesPorPeso.has(operacion);
+                const porConcentracion = operacion === 'dosis-volumen';
+                avisoPeso.hidden = !porPeso;
+                avisoPeso.style.display = porPeso ? '' : 'none';
+                const seleccionado = document.querySelector('.copt.sel');
+                const etiqueta = seleccionado?.textContent.replace(/\s+/g, ' ').trim() || operacion;
+                operacionActiva.textContent = 'Operación seleccionada: ' + etiqueta +
+                    (porPeso ? '. Requiere peso verificado del expediente.' :
+                     porConcentracion ? '. Requiere dosis y volumen disponibles.' :
+                     '. No requiere paciente ni peso.');
+                mostrarCampo(dosisDisponible, porConcentracion);
+                mostrarCampo(volumenDisponible, porConcentracion);
+                resetear();
+            }
+            document.querySelectorAll('.copt').forEach(el => el.addEventListener('click', () => {
+                document.querySelectorAll('.copt').forEach(x => x.classList.remove('sel'));
+                el.classList.add('sel');
+                operacion = el.dataset.op;
+                configurarOperacion();
+            }));
+            [valor, paciente, medicamento, dosisDisponible, volumenDisponible].forEach(el =>
+                el?.addEventListener('input', resetear));
+            [paciente, medicamento].forEach(el => el?.addEventListener('change', resetear));
+            configurarOperacion();
+
+            function datosActuales() {
+                const dato = { operacion, valor: valor.value.trim().replace(',', '.'),
+                    pacienteId: paciente?.value || null, medicamentoId: medicamento?.value || null,
+                    dosisDisponible: dosisDisponible?.disabled ? null : dosisDisponible?.value,
+                    volumenDisponible: volumenDisponible?.disabled ? null : volumenDisponible?.value };
+                return dato;
+            }
+            async function solicitar(ruta, cuerpo) {
+                const respuesta = await fetch(ruta, {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                    body: JSON.stringify(cuerpo)
+                });
+                const data = await respuesta.json();
+                if (!respuesta.ok) throw new Error(data.error || 'No se pudo realizar la operación.');
+                if (ruta.endsWith('/calcular') || ruta.endsWith('/guardar')) {
+                    const n = Number(data.resultado);
+                    if (data.resultado === null || data.resultado === undefined ||
+                        typeof data.unidad !== 'string' || !data.unidad.trim() ||
+                        !Number.isFinite(n)) {
+                        throw new Error('La respuesta del servidor no corresponde al Conversor actualizado. ' +
+                            'Comprueba que reemplazaste ConversionController.java y reiniciaste Spring Boot. ' +
+                            'No se puede confirmar que la operación no haya guardado registros.');
+                    }
+                }
+                return data;
+            }
+            calcular.addEventListener('click', async () => {
+                resetear();
+                const version = revision;
+                calcular.disabled = true;
+                try {
+                    const entrada = datosActuales();
+                    if (!entrada.valor || !Number.isFinite(Number(entrada.valor)) || Number(entrada.valor) < 0) {
+                        throw new Error('Ingresa un valor numérico válido para convertir.');
+                    }
+                    if (operacionesPorPeso.has(operacion) && !entrada.pacienteId) {
+                        throw new Error('Selecciona un paciente con peso verificado para esta operación. ' +
+                            'Si solo quieres convertir unidades, elige Masa o Volumen.');
+                    }
+                    const data = await solicitar('/api/conversiones/calcular', entrada);
+                    if (version !== revision) return;
+                    calculo = { entrada, data };
+                    resultado.textContent = Number(data.resultado).toLocaleString('es-CO', { maximumFractionDigits: 8 });
+                    unidad.textContent = data.unidad;
+                    guardar.disabled = false;
+                    validar.disabled = !operacionesDosisValidables.has(operacion)
+                        || !entrada.pacienteId || !entrada.medicamentoId;
+                    mensaje('Conversión calculada. No se ha guardado ningún registro.');
+                } catch (e) { if (version === revision) mensaje(e.message, true); }
+                finally { calcular.disabled = false; }
+            });
+            validar.addEventListener('click', async () => {
+                if (!calculo) return;
+                const version = revision;
+                const entrada = { ...calculo.entrada };
+                validar.disabled = true;
+                detalleValidacion.hidden = true;
+                try {
+                    const data = await solicitar('/api/conversiones/validar-dosis', entrada);
+                    if (version !== revision) return;
+                    const etiquetas = {
+                        POR_DEBAJO_DEL_RANGO: ['Por debajo del rango configurado', 'low'],
+                        DENTRO_DEL_RANGO_CONFIGURADO: ['Dentro del rango configurado', 'within'],
+                        POR_ENCIMA_DEL_RANGO: ['Por encima del rango configurado', 'high']
+                    };
+                    const clasificacion = etiquetas[data.estado];
+                    const dosis = Number(data.dosisMg);
+                    const minimo = Number(data.minimoMg);
+                    const maximo = Number(data.maximoMg);
+                    if (!clasificacion || [data.dosisMg, data.minimoMg, data.maximoMg].some(x => x === null || x === undefined || x === '') ||
+                        ![dosis, minimo, maximo].every(Number.isFinite) || minimo > maximo) {
+                        throw new Error('El servidor no devolvió una clasificación y límites de dosis válidos.');
+                    }
+                    const formatear = n => n.toLocaleString('es-CO', { maximumFractionDigits: 6 }) + ' mg';
+                    validacion = data;
+                    tituloValidacion.textContent = clasificacion[0];
+                    descripcionValidacion.textContent = 'El valor ingresado se comparó con los límites registrados para este medicamento y paciente.';
+                    dosisValidacion.textContent = formatear(dosis);
+                    minimoValidacion.textContent = formatear(minimo);
+                    maximoValidacion.textContent = formatear(maximo);
+                    detalleValidacion.className = 'conv-validation-detail conv-validation-' + clasificacion[1];
+                    detalleValidacion.hidden = false;
+                    observacion.textContent = 'Validación: ' + clasificacion[0] + '. Esto no equivale a una aprobación clínica.';
+                    observacion.className = 'semaforo-obs';
+                    mensaje('Comparación realizada. Se registró un evento de auditoría; no se guardó ninguna conversión.');
+                } catch (e) {
+                    if (version !== revision) return;
+                    validacion = null;
+                    detalleValidacion.hidden = true;
+                    observacion.textContent = 'La dosis no se ha validado.';
+                    mensaje('Validación no disponible: ' + e.message, true);
+                } finally {
+                    if (version === revision) validar.disabled = false;
+                }
+            });
+            guardar.addEventListener('click', async () => {
+                if (!calculo) return;
+                guardar.disabled = true;
+                try {
+                    const data = await solicitar('/api/conversiones/guardar', calculo.entrada);
+                    mensaje('Conversión guardada correctamente. ID: ' + data.id);
+                    $('audit-user').textContent = currentUser;
+                    $('audit-time').textContent = new Date(data.fecha).toLocaleString('es-CO');
+                    auditoria.style.display = 'block';
+                    calculo = null; // evitar el segundo guardado de la misma operación
+                    validar.disabled = true;
+                } catch (e) { mensaje('No se guardó: ' + e.message, true); guardar.disabled = false; }
+            });
+            async function cargarMedicamentos() {
+                if (!medicamento || consultaEnCurso) return;
+                consultaEnCurso = true;
+                const seleccionado = medicamento.value;
+                estadoMedicamentos.textContent = 'Consultando medicamentos en Atlas...';
+                try {
+                    const respuesta = await fetch('/conversiones/medicamentos-disponibles',
+                        { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } });
+                    if (!respuesta.ok) throw new Error('HTTP ' + respuesta.status);
+                    const data = await respuesta.json();
+                    const lista = Array.isArray(data.medicamentos) ? data.medicamentos : [];
+                    medicamento.replaceChildren(new Option('Seleccionar medicamento', ''));
+                    lista.forEach(m => {
+                        if (!m.id) return;
+                        const o = new Option((m.nombre || 'Medicamento') + (m.presentacion ? ' · ' + m.presentacion : ''), m.id);
+                        o.dataset.min = m.min ?? '';
+                        o.dataset.max = m.max ?? '';
+                        medicamento.add(o);
+                    });
+                    medicamento.value = lista.some(m => m.id === seleccionado) ? seleccionado : '';
+                    estadoMedicamentos.textContent = `${lista.length} medicamento(s) disponibles en la base conectada.`;
+                    if (medicamento.value !== seleccionado) resetear();
+                } catch (e) {
+                    estadoMedicamentos.textContent = 'No se pudo actualizar el inventario: ' + e.message;
+                } finally { consultaEnCurso = false; }
+            }
+            cargarMedicamentos();
+            medicamento?.addEventListener('focus', cargarMedicamentos);
+        });
+    </script>
+</body>
+</html>

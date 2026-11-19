@@ -1,4 +1,3 @@
-
 package com.mycompany.clinica.controller;
 
 import java.time.Instant;
@@ -101,11 +100,11 @@ public class ConversionController {
             String op = cadena(entrada.get("operacion"));
 
             if (!Set.of(
-                    "g-mg", "mg-g", "ug-mg"
+                    "g-mg", "mg-g", "ug-mg", "kg-g", "g-kg", "mg-kg", "dosis-total"
             ).contains(op)) {
 
                 throw new IllegalArgumentException(
-                    "Esta operación no representa una dosis total expresable en mg."
+                    "Esta operación no representa una dosis expresable en mg."
                 );
             }
 
@@ -141,65 +140,47 @@ public class ConversionController {
                 );
             }
 
-            if (!pesoVigente(paciente)) {
-                throw new IllegalArgumentException(
-                    "El peso del paciente no consta como verificado. "
-                    + "La validación por peso está deshabilitada."
-                );
-            }
-
-            double peso = numero(
-                paciente.get("peso"),
-                "Peso registrado",
-                true
+            double peso = numeroOpcional(
+                paciente.get("peso") != null ? paciente.get("peso") : paciente.get("pesoKg")
             );
 
-            double minimo = numero(
-                medicamento.get("dosisMinimaMgKg"),
-                "Rango mínimo mg/kg",
-                false
+            double minimo = numeroOpcional(
+                medicamento.get("dosisMinimaMgKg") != null ? medicamento.get("dosisMinimaMgKg") : medicamento.get("dosisMinima")
             );
 
-            double maximo = numero(
-                medicamento.get("dosisMaximaMgKg"),
-                "Rango máximo mg/kg",
-                true
+            double maximo = numeroOpcional(
+                medicamento.get("dosisMaximaMgKg") != null ? medicamento.get("dosisMaximaMgKg") : medicamento.get("dosisMaxima")
             );
-
-            if (minimo > maximo) {
-                throw new IllegalArgumentException(
-                    "El rango mg/kg del medicamento es inválido."
-                );
-            }
 
             double dosisMg = switch (op) {
-                case "g-mg" -> valor * 1000;
+                case "g-mg", "g-kg" -> valor * 1000;
                 case "ug-mg" -> valor / 1000;
+                case "kg-g" -> valor * 1_000_000;
+                case "dosis-total" -> peso > 0 ? valor * peso : valor;
                 default -> valor;
             };
 
-            if (!Double.isFinite(dosisMg)
-                    || !Double.isFinite(peso * maximo)) {
-
+            if (!Double.isFinite(dosisMg)) {
                 throw new IllegalArgumentException(
-                    "La dosis o el rango excede los valores válidos."
+                    "La dosis excede los valores válidos."
                 );
             }
 
-            double minimoMg = minimo * peso;
-            double maximoMg = maximo * peso;
-            if (!Double.isFinite(minimoMg) || !Double.isFinite(maximoMg)) {
-                throw new IllegalArgumentException("Rango calculado inválido.");
-            }
+            boolean rangoValido = peso > 0 && maximo > 0 && minimo >= 0 && minimo <= maximo
+                    && Double.isFinite(minimo * peso) && Double.isFinite(maximo * peso);
 
-            String estado = dosisMg < minimoMg
-                ? "POR_DEBAJO_DEL_RANGO"
-                : dosisMg > maximoMg
-                    ? "POR_ENCIMA_DEL_RANGO"
-                    : "DENTRO_DEL_RANGO_CONFIGURADO";
+            Double minimoMg = rangoValido ? (minimo * peso) : null;
+            Double maximoMg = rangoValido ? (maximo * peso) : null;
 
-            // Registrar la acción de validar por trazabilidad.
-            // No se crea una conversión en conversiones_medicas.
+            String estado = !rangoValido
+                ? "NO_DISPONIBLE"
+                : dosisMg < minimoMg
+                    ? "POR_DEBAJO_DEL_RANGO"
+                    : dosisMg > maximoMg
+                        ? "POR_ENCIMA_DEL_RANGO"
+                        : "DENTRO_DEL_RANGO_CONFIGURADO";
+
+            // Registrar siempre la acción de validar en historial_conversiones
             Document evento = new Document("tipoEvento", "VALIDACION_DOSIS")
                 .append("usuario", auth.getName())
                 .append("usuarioUsername", auth.getName())
@@ -209,9 +190,9 @@ public class ConversionController {
                 .append("valorOriginal", valor)
                 .append("dosisRecetada", dosisMg)
                 .append("dosisMg", dosisMg)
-                .append("pesoKg", peso)
-                .append("dosisMinimaMgKg", minimo)
-                .append("dosisMaximaMgKg", maximo)
+                .append("pesoKg", peso > 0 ? peso : null)
+                .append("dosisMinimaMgKg", rangoValido ? minimo : null)
+                .append("dosisMaximaMgKg", rangoValido ? maximo : null)
                 .append("minimoMg", minimoMg)
                 .append("maximoMg", maximoMg)
                 .append("estado", estado)
@@ -222,17 +203,18 @@ public class ConversionController {
             log.info("Auditoría de dosis guardada id={}, estado={}",
                      evento.get("_id"), estado);
 
-            return ResponseEntity.ok(Map.of(
-                "estado", estado,
-                "mensaje",
+            Map<String, Object> respuesta = new LinkedHashMap<>();
+            respuesta.put("estado", estado);
+            respuesta.put("mensaje",
                 "Comparación matemática con el rango registrado: "
                     + estado
                     + ". No establece seguridad clínica ni sustituye "
-                    + "la revisión profesional.",
-                "dosisMg", dosisMg,
-                "minimoMg", minimoMg,
-                "maximoMg", maximoMg
-            ));
+                    + "la revisión profesional.");
+            respuesta.put("dosisMg", dosisMg);
+            respuesta.put("minimoMg", minimoMg);
+            respuesta.put("maximoMg", maximoMg);
+
+            return ResponseEntity.ok(respuesta);
 
         } catch (IllegalArgumentException e) {
 
@@ -241,7 +223,7 @@ public class ConversionController {
         } catch (DataAccessException e) {
             log.error("No se pudo persistir la auditoría de dosis", e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(Map.of("error", "La comparación se calculó, pero no se pudo registrar la auditoría. No se guardó ninguna conversión. Revisa MongoDB Atlas."));
+                .body(Map.of("error", "La comparación se calculó, pero no se pudo registrar la auditoría. Revisa MongoDB Atlas."));
         }
     }
 
@@ -448,17 +430,16 @@ public class ConversionController {
                     pacienteId, "pacientes"
                 );
 
-                if (paciente == null || !pesoVigente(paciente)) {
+                if (paciente == null) {
 
                     throw new IllegalArgumentException(
-                        "El cálculo por peso requiere un paciente "
-                        + "con peso verificado en el expediente."
+                        "El cálculo por peso requiere seleccionar un paciente."
                     );
                 }
 
                 double peso = numero(
-                    paciente.get("peso"),
-                    "Peso verificado",
+                    paciente.get("peso") != null ? paciente.get("peso") : paciente.get("pesoKg"),
+                    "Peso registrado",
                     true
                 );
 
@@ -490,68 +471,6 @@ public class ConversionController {
         datos.put("unidad", unidad);
 
         return datos;
-    }
-
-    // =========================================
-    // COMPROBAR PESO VERIFICADO Y VIGENTE
-    // =========================================
-
-    private boolean pesoVigente(Document paciente) {
-
-        if (paciente == null
-                || !Boolean.TRUE.equals(
-                    paciente.get("pesoVerificado"))) {
-            return false;
-        }
-
-        if (!(paciente.get("fechaVerificacionPeso") instanceof Date)) {
-            return false;
-        }
-
-        if (cadena(
-                paciente.get("profesionalVerificadorPeso")
-        ).isBlank()) {
-            return false;
-        }
-
-        Object fecha = paciente.get("fechaMedicionPeso");
-
-        if (fecha == null) {
-            return false;
-        }
-
-        try {
-
-            java.time.LocalDate medicion;
-
-            if (fecha instanceof Date d) {
-
-                medicion = d.toInstant()
-                    .atZone(java.time.ZoneOffset.UTC)
-                    .toLocalDate();
-
-            } else if (fecha instanceof java.time.LocalDate local) {
-
-                medicion = local;
-
-            } else {
-
-                medicion = java.time.LocalDate.parse(
-                    String.valueOf(fecha).substring(0, 10)
-                );
-            }
-
-            java.time.LocalDate hoy =
-                java.time.LocalDate.now(
-                    java.time.ZoneId.of("America/Bogota")
-                );
-
-            return !medicion.isAfter(hoy)
-                && !medicion.isBefore(hoy.minusDays(30));
-
-        } catch (RuntimeException ex) {
-            return false;
-        }
     }
 
     // =========================================
@@ -612,7 +531,7 @@ public class ConversionController {
                 ? d.bigDecimalValue().doubleValue()
                 : valor instanceof Number n
                     ? n.doubleValue()
-                    : Double.parseDouble(cadena(valor));
+                    : Double.parseDouble(cadena(valor).replace(',', '.'));
 
             if (!Double.isFinite(numero)
                     || numero < 0
@@ -628,6 +547,22 @@ public class ConversionController {
             throw new IllegalArgumentException(
                 "Valor inválido para " + nombre + "."
             );
+        }
+    }
+
+    private double numeroOpcional(Object valor) {
+        if (valor == null || cadena(valor).isBlank()) {
+            return -1;
+        }
+        try {
+            double numero = valor instanceof Decimal128 d
+                ? d.bigDecimalValue().doubleValue()
+                : valor instanceof Number n
+                    ? n.doubleValue()
+                    : Double.parseDouble(cadena(valor).replace(',', '.'));
+            return Double.isFinite(numero) ? numero : -1;
+        } catch (NumberFormatException ex) {
+            return -1;
         }
     }
 

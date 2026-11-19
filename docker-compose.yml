@@ -4,6 +4,8 @@ services:
     container_name: clinguard-app
     ports:
       - "8080:8080"
+    env_file:
+      - .env.example
     environment:
       - SERVER_ADDRESS=0.0.0.0
-      - JWT_SECRET=Cl1nGu4rd_S3cr3t_K3y_Sup3r_S3gur4_2026_ClaveLarga
+      - JWT_SECRET=

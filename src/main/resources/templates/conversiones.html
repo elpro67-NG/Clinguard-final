@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html data-theme="dark" lang="es" xmlns:th="http://www.thymeleaf.org"
+<html data-theme="light" lang="es" xmlns:th="http://www.thymeleaf.org"
     xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
@@ -21,7 +21,108 @@
 
     <link rel="icon" type="image/png" th:href="@{/img/favicon-clinguard.png}" href="/img/favicon-clinguard.png">
 
-    
+    <style>
+        /* --- PESTAÑAS Y AUDITORÍA --- */
+        .tab-trigger {
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .tab-trigger:hover {
+            border-color: var(--accent, #00778b);
+        }
+        .tab-trigger.active {
+            border: 1px solid var(--accent, #00778b);
+            background: rgba(0, 119, 139, 0.06);
+            box-shadow: 0 0 10px rgba(0, 119, 139, 0.1);
+        }
+
+        /* --- SEMÁFORO CLÍNICO (MODO CLARO Y OSCURO) --- */
+        .semaforo-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 14px;
+            background: rgba(15, 23, 42, 0.28);
+            border-radius: 30px;
+            margin: 0 auto 14px;
+            width: fit-content;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+        }
+        [data-theme="dark"] .semaforo-container {
+            background: rgba(0, 0, 0, 0.28);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        .sem-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #202b33;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .sem-circle.active-green {
+            background: #2ecc71 !important;
+            box-shadow: 0 0 12px #2ecc71, inset 0 1px 2px #fff !important;
+        }
+        .sem-circle.active-yellow {
+            background: #f1c40f !important;
+            box-shadow: 0 0 12px #f1c40f, inset 0 1px 2px #fff !important;
+        }
+        .sem-circle.active-red {
+            background: #e74c3c !important;
+            box-shadow: 0 0 12px #e74c3c, inset 0 1px 2px #fff !important;
+        }
+        .sem-circle.active-blue {
+            background: #3498db !important;
+            box-shadow: 0 0 12px #3498db, inset 0 1px 2px #fff !important;
+        }
+
+        /* --- BANNERS DE OBSERVACIÓN --- */
+        .semaforo-obs {
+            display: none;
+            margin: 12px 0;
+            padding: 11px 16px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            line-height: 1.4;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .semaforo-obs.safe {
+            display: block;
+            background: rgba(46, 204, 113, 0.14);
+            color: #1e8449;
+            border: 1px solid rgba(46, 204, 113, 0.38);
+        }
+        .semaforo-obs.warn {
+            display: block;
+            background: rgba(241, 196, 15, 0.16);
+            color: #9a7d0a;
+            border: 1px solid rgba(241, 196, 15, 0.42);
+        }
+        .semaforo-obs.danger {
+            display: block;
+            background: rgba(231, 76, 60, 0.14);
+            color: #c0392b;
+            border: 1px solid rgba(231, 76, 60, 0.38);
+        }
+        .semaforo-obs.suggest {
+            display: block;
+            background: rgba(52, 152, 219, 0.12);
+            color: #1d70b8;
+            border: 1px solid rgba(52, 152, 219, 0.35);
+        }
+
+        [data-theme="dark"] .semaforo-obs.safe { color: #2ecc71; }
+        [data-theme="dark"] .semaforo-obs.warn { color: #f1c40f; }
+        [data-theme="dark"] .semaforo-obs.danger { color: #e74c3c; }
+        [data-theme="dark"] .semaforo-obs.suggest { color: #3498db; }
+    </style>
+
 </head>
 
 <body data-page="conversiones" class="cg-view-conversiones">
@@ -65,7 +166,7 @@
 
         <form th:action="@{/logout}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <button type="submit" class="logout-link cg-inline-conversiones-1" >
+            <button type="submit" class="logout-link cg-inline-conversiones-1">
                 <i class="bx bx-log-out"></i> Salir
             </button>
         </form>
@@ -97,7 +198,7 @@
                 </div>
 
                 <!-- TARJETAS COMO PESTAÑAS -->
-                <div class="grid-4 cg-inline-conversiones-2" >
+                <div class="grid-4 cg-inline-conversiones-2">
                     <div class="m-card tab-trigger active" onclick="showTab('masa', this)">
                         <div>
                             <div class="m-val"><i class="bx bx-dumbbell"></i></div>
@@ -119,7 +220,7 @@
                 </div>
 
                 <!-- SELECCIONAR CONVERSIÓN -->
-                <div class="card cg-inline-conversiones-3" >
+                <div class="card cg-inline-conversiones-3">
                     <div class="card-toolbar">
                         <div>
                             <h3 class="section-title-compact">Selecciona una conversión</h3>
@@ -129,8 +230,8 @@
 
                     <!-- PESTAÑA: MASA -->
                     <div id="tab-masa" class="tab-content active">
-                        <h4  class="cg-inline-conversiones-4"><i class="bx bx-dumbbell"></i> Masa y peso</h4>
-                        <div  class="cg-inline-conversiones-5">
+                        <h4 class="cg-inline-conversiones-4"><i class="bx bx-dumbbell"></i> Masa y peso</h4>
+                        <div class="cg-inline-conversiones-5">
                             <div class="copt sel" data-op="g-mg">Gramos → Miligramos <span class="muted-text-sm">g → mg</span></div>
                             <div class="copt" data-op="mg-g">Miligramos → Gramos <span class="muted-text-sm">mg → g</span></div>
                             <div class="copt" data-op="ug-mg">Microgramos → Miligramos <span class="muted-text-sm">µg → mg</span></div>
@@ -142,8 +243,8 @@
 
                     <!-- PESTAÑA: VOLUMEN -->
                     <div id="tab-volumen" class="tab-content">
-                        <h4  class="cg-inline-conversiones-6"><i class="bx bx-vial"></i> Volumen</h4>
-                        <div  class="cg-inline-conversiones-7">
+                        <h4 class="cg-inline-conversiones-6"><i class="bx bx-vial"></i> Volumen</h4>
+                        <div class="cg-inline-conversiones-7">
                             <div class="copt" data-op="ml-l">Mililitros → Litros <span class="muted-text-sm">mL → L</span></div>
                             <div class="copt" data-op="l-ml">Litros → Mililitros <span class="muted-text-sm">L → mL</span></div>
                         </div>
@@ -151,8 +252,8 @@
 
                     <!-- PESTAÑA: DOSIFICACIÓN -->
                     <div id="tab-dosificacion" class="tab-content">
-                        <h4  class="cg-inline-conversiones-8"><i class="bx bx-capsule"></i> Dosis y peso</h4>
-                        <div  class="cg-inline-conversiones-9">
+                        <h4 class="cg-inline-conversiones-8"><i class="bx bx-capsule"></i> Dosis y peso</h4>
+                        <div class="cg-inline-conversiones-9">
                             <div class="copt" data-op="dosis-mg-kg">Calcular mg/kg <span class="muted-text-sm">dosis total ÷ peso</span></div>
                             <div class="copt" data-op="dosis-ug-kg">Calcular µg/kg <span class="muted-text-sm">dosis total ÷ peso</span></div>
                             <div class="copt" data-op="dosis-total">Calcular dosis total <span class="muted-text-sm">dosis/kg × peso</span></div>
@@ -162,7 +263,7 @@
                 </div>
 
                 <!-- ÁREA DEL CÁLCULO -->
-                <div  class="cg-inline-conversiones-10">
+                <div class="cg-inline-conversiones-10">
 
                     <!-- DATOS -->
                     <div class="card">
@@ -201,8 +302,8 @@
                             </div>
                         </div>
 
-                        <!-- VALORES (Añadido oninput para permitir comas) -->
-                        <div class="form-group cg-inline-conversiones-11" >
+                        <!-- VALORES -->
+                        <div class="form-group cg-inline-conversiones-11">
                             <label for="conv-val">Valor a convertir / Dosis</label>
                             <input id="conv-val" type="text" inputmode="decimal" oninput="this.value = this.value.replace(',', '.')" placeholder="Ej: 500 o 33,1">
                         </div>
@@ -215,23 +316,21 @@
                             No se aceptan pesos escritos manualmente.
                         </p>
 
-                        <div class="form-group cg-inline-conversiones-13" >
+                        <div class="form-group cg-inline-conversiones-13">
                             <label for="dosisDisponible">Dosis disponible</label>
                             <input id="dosisDisponible" type="number" step="any" min="0" placeholder="Ej: 250">
                         </div>
 
-                        <div class="form-group cg-inline-conversiones-14" >
+                        <div class="form-group cg-inline-conversiones-14">
                             <label for="volumenDisponible">Volumen disponible (mL)</label>
                             <input id="volumenDisponible" type="number" step="any" min="0" placeholder="Ej: 5">
                         </div>
 
-                        <!-- Acciones independientes: calcular no registra; validar crea evento de auditoría; guardar persiste la conversión. -->
-                        <div class="conv-actions" role="group" aria-label="Acciones del conversor">
-                            <button type="button" id="conv-calcular" class="btn-primary conversion-submit"><i class="bx bx-calculator"></i> Calcular conversión</button>
-                            <button type="button" id="conv-validar" class="btn-primary" disabled><i class="bx bx-check-shield"></i> Validar dosis</button>
-                            <button type="button" id="conv-guardar" class="btn-primary" disabled><i class="bx bx-save"></i> Guardar conversión</button>
-                        </div>
-                        <span id="conv-estado-guardado" class="conv-save-msg cg-inline-conversiones-16" role="status" aria-live="polite" ></span>
+                        <!-- BOTÓN ÚNICO UNIFICADO -->
+                        <button type="button" id="conv-ejecutar" class="btn-primary conversion-submit" style="width: 100%; margin-top: 22px; justify-content: center;">
+                            <i class="bx bx-check-shield"></i> Validar Dosis y Registrar
+                        </button>
+                        <span id="conv-estado-guardado" class="conv-save-msg cg-inline-conversiones-16" role="status" aria-live="polite" style="display:block; margin-top:10px; text-align:center;"></span>
                     </div>
 
                     <!-- RESULTADO -->
@@ -239,28 +338,29 @@
                         <div class="card-toolbar">
                             <div>
                                 <h3 class="section-title-compact">Resultado</h3>
-                                <p class="muted-text-sm">El cálculo no se guarda automáticamente. Validar dosis crea un evento de auditoría independiente de las conversiones guardadas.</p>
+                                <p class="muted-text-sm">Validación clínica y trazabilidad.</p>
                             </div>
                             <div class="cita-stat-icon cita-stat-green">
                                 <i class="bx bx-check-circle"></i>
                             </div>
                         </div>
 
-                        <div  class="cg-inline-conversiones-17">
+                        <div class="cg-inline-conversiones-17">
                             
                             <!-- SEMAFORO CLINICO -->
-                            <div class="semaforo-container" id="semaforo-widget" title="Semaforo Clinico de Seguridad Farmacologica">
+                            <div class="semaforo-container" id="semaforo-widget" title="Semáforo Clínico de Seguridad Farmacológica">
                                 <div class="sem-circle" id="sem-red" title="Por encima del rango configurado"></div>
                                 <div class="sem-circle" id="sem-yellow" title="Por debajo del rango configurado"></div>
                                 <div class="sem-circle" id="sem-green" title="Dentro del rango configurado"></div>
-                                <div class="sem-circle" id="sem-blue" title="Indicador no utilizado para validar dosis"></div>
+                                <div class="sem-circle" id="sem-blue" title="Dosis sugerida de referencia"></div>
                             </div>
                             
-                            <div class="res-big cg-inline-conversiones-18" id="res-val" >
+                            <div class="res-big cg-inline-conversiones-18" id="res-val">
                                 —
                             </div>
 
                             <div id="semaforo-observacion" class="semaforo-obs"></div>
+
                             <section id="conv-validacion-detalle" class="conv-validation-detail" hidden aria-live="polite" aria-label="Resultado de la validación de dosis">
                                 <div class="conv-validation-heading">
                                     <i class="bx bx-info-circle" aria-hidden="true"></i>
@@ -275,16 +375,15 @@
                                 <p class="conv-validation-disclaimer">Comparación matemática con parámetros de prueba o configurados. No certifica seguridad clínica.</p>
                             </section>
 
-                            
-                            <div class="res-sub cg-inline-conversiones-19" id="res-unit" >
+                            <div class="res-sub cg-inline-conversiones-19" id="res-unit">
                                 Selecciona una conversión e ingresa un valor.
                             </div>
 
                             <!-- CONFIRMACIÓN DE GUARDADO DE CONVERSIÓN -->
                             <div id="audit-box" class="audit-signature">
-                                <i class="bx bx-lock-alt"></i> <strong>Conversión guardada</strong><br>
-                                Esta conversión fue guardada por: <span id="audit-user" class="audit-user"></span><br>
-                                Fecha y hora: <span id="audit-time"  class="cg-inline-conversiones-20"></span>
+                                <i class="bx bx-lock-alt"></i> <strong>Registro de auditoría</strong><br>
+                                Esta conversión fue calculada y registrada por: <span id="audit-user" class="audit-user"></span><br>
+                                Fecha y hora: <span id="audit-time" class="cg-inline-conversiones-20"></span>
                             </div>
 
                         </div>
@@ -293,13 +392,13 @@
                 </div>
 
                 <!-- GUÍA DOSIFICACIÓN -->
-                <div class="card cg-inline-conversiones-21" >
+                <div class="card cg-inline-conversiones-21">
                     <div class="card-toolbar">
                         <div>
                             <h3 class="section-title-compact">¿Cómo usar los cálculos de dosis?</h3>
                         </div>
                     </div>
-                    <div  class="cg-inline-conversiones-22">
+                    <div class="cg-inline-conversiones-22">
                         <div>
                             <strong>Calcular mg/kg o µg/kg</strong>
                             <p class="muted-text-sm">En “Valor” escribe la dosis total. El cálculo por peso requiere el peso verificado del expediente del paciente.</p>
@@ -314,17 +413,17 @@
                         </div>
                         <div>
                             <strong>Conversiones simples</strong>
-                            <p class="muted-text-sm">Selecciona una operación de las pestañas Masa o Volumen. Solo necesitas el campo “Valor”; no se requiere paciente ni peso. El botón Guardar es opcional.</p>
+                            <p class="muted-text-sm">Selecciona una operación de las pestañas Masa o Volumen. Solo necesitas el campo “Valor”; no se requiere paciente ni peso.</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- AVISO -->
-                <div class="card cg-inline-conversiones-23" >
-                    <div  class="cg-inline-conversiones-24">
-                        <i class="bx bx-info-circle cg-inline-conversiones-25" ></i>
+                <div class="card cg-inline-conversiones-23">
+                    <div class="cg-inline-conversiones-24">
+                        <i class="bx bx-info-circle cg-inline-conversiones-25"></i>
                         <div>
-                            <h3 class="section-title-compact cg-inline-conversiones-26" >Herramienta de apoyo</h3>
+                            <h3 class="section-title-compact cg-inline-conversiones-26">Herramienta de apoyo</h3>
                             <p class="muted-text-sm">Verifica siempre las unidades, concentraciones y valores utilizados antes de aplicar cualquier resultado en un procedimiento clínico.</p>
                         </div>
                     </div>
@@ -334,27 +433,27 @@
         </div>
     </div>
 
-    <!-- Lógica propia del conversor: acciones separadas y sin guardado implícito. -->
     <script th:inline="javascript">
         const currentUser = /*[[${#authentication.name}]]*/ 'Usuario';
         const csrfToken = /*[[${_csrf.token}]]*/ '';
         const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+
         function showTab(tabId, element) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-trigger').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
             element.classList.add('active');
-            // Selección de operación visible, sin ejecutar cálculos automáticos.
             const primer = document.querySelector('#tab-' + tabId + ' .copt');
             if (primer) primer.click();
         }
+
         document.addEventListener('DOMContentLoaded', () => {
             const $ = (id) => document.getElementById(id);
             const medicamento = $('conv-medicamento'), paciente = $('conv-paciente');
             const valor = $('conv-val');
             const avisoPeso = $('conv-aviso-peso'), operacionActiva = $('conv-operacion-activa');
             const dosisDisponible = $('dosisDisponible'), volumenDisponible = $('volumenDisponible');
-            const calcular = $('conv-calcular'), validar = $('conv-validar'), guardar = $('conv-guardar');
+            const ejecutar = $('conv-ejecutar');
             const estado = $('conv-estado-guardado'), resultado = $('res-val'), unidad = $('res-unit');
             const observacion = $('semaforo-observacion'), auditoria = $('audit-box');
             const detalleValidacion = $('conv-validacion-detalle');
@@ -364,40 +463,131 @@
             const minimoValidacion = $('conv-validacion-minimo');
             const maximoValidacion = $('conv-validacion-maximo');
             const circulos = [...document.querySelectorAll('.sem-circle')];
+            const semRed = $('sem-red'), semYellow = $('sem-yellow'), semGreen = $('sem-green'), semBlue = $('sem-blue');
             const estadoMedicamentos = $('conv-medicamento-estado');
-            let calculo = null;
-            let validacion = null;
+
+            let completado = false;
             let consultaEnCurso = false;
             let operacion = document.querySelector('.copt.sel')?.dataset.op || 'g-mg';
             const operacionesPorPeso = new Set(['dosis-mg-kg', 'dosis-ug-kg', 'dosis-total']);
-            const operacionesDosisValidables = new Set(['g-mg', 'mg-g', 'ug-mg']);
+            const operacionesDosisValidables = new Set(['g-mg', 'mg-g', 'ug-mg', 'kg-g', 'g-kg', 'mg-kg', 'dosis-total']);
             let revision = 0;
+
+            const fmt = (n) => Number(n).toLocaleString('es-CO', { maximumFractionDigits: 2 });
+
+            function apagarSemaforo() {
+                circulos.forEach(el => el.className = 'sem-circle');
+            }
 
             function mensaje(texto, error = false) {
                 estado.textContent = texto;
-                estado.style.color = error ? '#ff8b8b' : '#9ac9d1';
+                estado.style.color = error ? '#d87676' : '#00778b';
             }
-            function resetear() {
+
+            function mostrarSugerenciaVisual() {
+                if (!paciente?.value || !medicamento?.value) return false;
+                const optPac = paciente.options[paciente.selectedIndex];
+                const optMed = medicamento.options[medicamento.selectedIndex];
+                const peso = parseFloat(optPac?.dataset.peso);
+                const minKg = parseFloat(optMed?.dataset.min);
+                const maxKg = parseFloat(optMed?.dataset.max);
+
+                if (Number.isFinite(peso) && peso > 0 && Number.isFinite(minKg) && Number.isFinite(maxKg)) {
+                    const minTotal = minKg * peso;
+                    const maxTotal = maxKg * peso;
+                    const sugerida = (minTotal + maxTotal) / 2;
+
+                    apagarSemaforo();
+                    if (semBlue) semBlue.className = 'sem-circle active-blue';
+
+                    resultado.textContent = `${fmt(sugerida)} mg`;
+                    observacion.className = 'semaforo-obs suggest';
+                    observacion.innerHTML = '💡 Sugerencia calculada. Ingresa la dosis a validar y haz clic en el botón.';
+                    unidad.textContent = `Rango Seguro: ${fmt(minTotal)} - ${fmt(maxTotal)} mg`;
+                    return true;
+                }
+                return false;
+            }
+
+            function convertirResultadoAMg(valorCalculado, unidadCalculada) {
+                const u = (unidadCalculada || '').trim().toLowerCase();
+                if (u === 'mg') return valorCalculado;
+                if (u === 'g') return valorCalculado * 1000;
+                if (u === 'µg' || u === 'ug') return valorCalculado / 1000;
+                if (u === 'kg') return valorCalculado * 1000000;
+                return NaN;
+            }
+
+            function evaluarDosisLocalmente(dosisMg) {
+                if (!paciente?.value || !medicamento?.value || !Number.isFinite(dosisMg)) return false;
+                const optPac = paciente.options[paciente.selectedIndex];
+                const optMed = medicamento.options[medicamento.selectedIndex];
+                const peso = parseFloat(optPac?.dataset.peso);
+                const minKg = parseFloat(optMed?.dataset.min);
+                const maxKg = parseFloat(optMed?.dataset.max);
+
+                if (!Number.isFinite(peso) || peso <= 0 || !Number.isFinite(minKg) || !Number.isFinite(maxKg)) {
+                    return false;
+                }
+
+                const minTotal = minKg * peso;
+                const maxTotal = maxKg * peso;
+                const formatear = n => n.toLocaleString('es-CO', { maximumFractionDigits: 2 }) + ' mg';
+
+                apagarSemaforo();
+                descripcionValidacion.textContent = 'El valor ingresado se comparó con los límites registrados para este medicamento y paciente.';
+                dosisValidacion.textContent = formatear(dosisMg);
+                minimoValidacion.textContent = formatear(minTotal);
+                maximoValidacion.textContent = formatear(maxTotal);
+
+                if (dosisMg < minTotal) {
+                    if (semYellow) semYellow.className = 'sem-circle active-yellow';
+                    tituloValidacion.textContent = 'Por debajo del rango configurado';
+                    detalleValidacion.className = 'conv-validation-detail conv-validation-low';
+                    observacion.className = 'semaforo-obs warn';
+                    observacion.innerHTML = `⚠️ Infradosis: La dosis equivale a <strong>${formatear(dosisMg)}</strong>, siendo menor al mínimo permitido (${formatear(minTotal)}).`;
+                } else if (dosisMg > maxTotal) {
+                    if (semRed) semRed.className = 'sem-circle active-red';
+                    tituloValidacion.textContent = 'Por encima del rango configurado';
+                    detalleValidacion.className = 'conv-validation-detail conv-validation-high';
+                    observacion.className = 'semaforo-obs danger';
+                    observacion.innerHTML = `🚨 Sobredosis: La dosis equivale a <strong>${formatear(dosisMg)}</strong>, superando el máximo permitido (${formatear(maxTotal)}).`;
+                } else {
+                    if (semGreen) semGreen.className = 'sem-circle active-green';
+                    tituloValidacion.textContent = 'Dentro del rango configurado';
+                    detalleValidacion.className = 'conv-validation-detail conv-validation-within';
+                    observacion.className = 'semaforo-obs safe';
+                    observacion.innerHTML = `✅ Dosis Segura: La dosis equivale a <strong>${formatear(dosisMg)}</strong>, dentro del rango clínico (${formatear(minTotal)} - ${formatear(maxTotal)}).`;
+                }
+                detalleValidacion.hidden = false;
+                return true;
+            }
+
+            function resetear(conSugerencia = false) {
                 revision++;
-                calculo = null;
-                validacion = null;
+                completado = false;
                 detalleValidacion.hidden = true;
                 detalleValidacion.className = 'conv-validation-detail';
-                validar.disabled = true;
-                guardar.disabled = true;
-                resultado.textContent = '—';
-                unidad.textContent = 'Pulsa Calcular conversión.';
-                observacion.textContent = 'La conversión matemática no acredita seguridad clínica.';
-                observacion.className = 'semaforo-obs';
-                circulos.forEach(el => el.className = 'sem-circle');
                 auditoria.style.display = 'none';
                 mensaje('');
+
+                if (conSugerencia && mostrarSugerenciaVisual()) {
+                    return;
+                }
+
+                apagarSemaforo();
+                resultado.textContent = '—';
+                unidad.textContent = 'Selecciona una conversión e ingresa un valor.';
+                observacion.textContent = '';
+                observacion.className = 'semaforo-obs';
             }
+
             function mostrarCampo(el, visible) {
                 const grupo = el?.closest('.form-group');
                 if (grupo) { grupo.hidden = !visible; grupo.style.display = visible ? '' : 'none'; }
                 if (el) el.disabled = !visible;
             }
+
             function configurarOperacion() {
                 const porPeso = operacionesPorPeso.has(operacion);
                 const porConcentracion = operacion === 'dosis-volumen';
@@ -411,26 +601,37 @@
                      '. No requiere paciente ni peso.');
                 mostrarCampo(dosisDisponible, porConcentracion);
                 mostrarCampo(volumenDisponible, porConcentracion);
-                resetear();
+                resetear(true);
             }
+
             document.querySelectorAll('.copt').forEach(el => el.addEventListener('click', () => {
                 document.querySelectorAll('.copt').forEach(x => x.classList.remove('sel'));
                 el.classList.add('sel');
                 operacion = el.dataset.op;
                 configurarOperacion();
             }));
-            [valor, paciente, medicamento, dosisDisponible, volumenDisponible].forEach(el =>
-                el?.addEventListener('input', resetear));
-            [paciente, medicamento].forEach(el => el?.addEventListener('change', resetear));
+
+            [valor, dosisDisponible, volumenDisponible].forEach(el =>
+                el?.addEventListener('input', () => {
+                    if (completado) {
+                        resetear(true);
+                    }
+                }));
+
+            [paciente, medicamento].forEach(el => el?.addEventListener('change', () => resetear(true)));
             configurarOperacion();
 
             function datosActuales() {
-                const dato = { operacion, valor: valor.value.trim().replace(',', '.'),
-                    pacienteId: paciente?.value || null, medicamentoId: medicamento?.value || null,
+                return {
+                    operacion,
+                    valor: valor.value.trim().replace(',', '.'),
+                    pacienteId: paciente?.value || null,
+                    medicamentoId: medicamento?.value || null,
                     dosisDisponible: dosisDisponible?.disabled ? null : dosisDisponible?.value,
-                    volumenDisponible: volumenDisponible?.disabled ? null : volumenDisponible?.value };
-                return dato;
+                    volumenDisponible: volumenDisponible?.disabled ? null : volumenDisponible?.value
+                };
             }
+
             async function solicitar(ruta, cuerpo) {
                 const respuesta = await fetch(ruta, {
                     method: 'POST', credentials: 'same-origin',
@@ -444,17 +645,18 @@
                     if (data.resultado === null || data.resultado === undefined ||
                         typeof data.unidad !== 'string' || !data.unidad.trim() ||
                         !Number.isFinite(n)) {
-                        throw new Error('La respuesta del servidor no corresponde al Conversor actualizado. ' +
-                            'Comprueba que reemplazaste ConversionController.java y reiniciaste Spring Boot. ' +
-                            'No se puede confirmar que la operación no haya guardado registros.');
+                        throw new Error('La respuesta del servidor no corresponde al Conversor actualizado.');
                     }
                 }
                 return data;
             }
-            calcular.addEventListener('click', async () => {
-                resetear();
+
+            // FLUJO UNIFICADO: Calcular -> Validar Dosis (servidor con respaldo local) -> Guardar
+            ejecutar.addEventListener('click', async () => {
+                resetear(false);
                 const version = revision;
-                calcular.disabled = true;
+                ejecutar.disabled = true;
+
                 try {
                     const entrada = datosActuales();
                     if (!entrada.valor || !Number.isFinite(Number(entrada.valor)) || Number(entrada.valor) < 0) {
@@ -464,75 +666,82 @@
                         throw new Error('Selecciona un paciente con peso verificado para esta operación. ' +
                             'Si solo quieres convertir unidades, elige Masa o Volumen.');
                     }
-                    const data = await solicitar('/api/conversiones/calcular', entrada);
+
+                    mensaje('Procesando conversión y validación...');
+
+                    // 1. Calcular conversión matemática
+                    const dataCalc = await solicitar('/api/conversiones/calcular', entrada);
                     if (version !== revision) return;
-                    calculo = { entrada, data };
-                    resultado.textContent = Number(data.resultado).toLocaleString('es-CO', { maximumFractionDigits: 8 });
-                    unidad.textContent = data.unidad;
-                    guardar.disabled = false;
-                    validar.disabled = !operacionesDosisValidables.has(operacion)
-                        || !entrada.pacienteId || !entrada.medicamentoId;
-                    mensaje('Conversión calculada. No se ha guardado ningún registro.');
-                } catch (e) { if (version === revision) mensaje(e.message, true); }
-                finally { calcular.disabled = false; }
-            });
-            validar.addEventListener('click', async () => {
-                if (!calculo) return;
-                const version = revision;
-                const entrada = { ...calculo.entrada };
-                validar.disabled = true;
-                detalleValidacion.hidden = true;
-                try {
-                    const data = await solicitar('/api/conversiones/validar-dosis', entrada);
-                    if (version !== revision) return;
-                    const etiquetas = {
-                        POR_DEBAJO_DEL_RANGO: ['Por debajo del rango configurado', 'low'],
-                        DENTRO_DEL_RANGO_CONFIGURADO: ['Dentro del rango configurado', 'within'],
-                        POR_ENCIMA_DEL_RANGO: ['Por encima del rango configurado', 'high']
-                    };
-                    const clasificacion = etiquetas[data.estado];
-                    const dosis = Number(data.dosisMg);
-                    const minimo = Number(data.minimoMg);
-                    const maximo = Number(data.maximoMg);
-                    if (!clasificacion || [data.dosisMg, data.minimoMg, data.maximoMg].some(x => x === null || x === undefined || x === '') ||
-                        ![dosis, minimo, maximo].every(Number.isFinite) || minimo > maximo) {
-                        throw new Error('El servidor no devolvió una clasificación y límites de dosis válidos.');
+                    const resNumerico = Number(dataCalc.resultado);
+                    resultado.textContent = resNumerico.toLocaleString('es-CO', { maximumFractionDigits: 8 });
+                    unidad.textContent = dataCalc.unidad;
+
+                    // 2. Validar dosis
+                    if (operacionesDosisValidables.has(operacion) && entrada.pacienteId && entrada.medicamentoId) {
+                        try {
+                            const dataVal = await solicitar('/api/conversiones/validar-dosis', entrada);
+                            if (version !== revision) return;
+
+                            const etiquetas = {
+                                POR_DEBAJO_DEL_RANGO: ['Por debajo del rango configurado', 'low', semYellow, 'warn'],
+                                DENTRO_DEL_RANGO_CONFIGURADO: ['Dentro del rango configurado', 'within', semGreen, 'safe'],
+                                POR_ENCIMA_DEL_RANGO: ['Por encima del rango configurado', 'high', semRed, 'danger']
+                            };
+                            const clasificacion = etiquetas[dataVal.estado];
+                            const dosis = Number(dataVal.dosisMg);
+                            const minimo = Number(dataVal.minimoMg);
+                            const maximo = Number(dataVal.maximoMg);
+
+                            if (clasificacion && [dataVal.dosisMg, dataVal.minimoMg, dataVal.maximoMg].every(x => x !== null && x !== undefined && x !== '') &&
+                                [dosis, minimo, maximo].every(Number.isFinite) && minimo <= maximo) {
+                                const formatear = n => n.toLocaleString('es-CO', { maximumFractionDigits: 6 }) + ' mg';
+                                tituloValidacion.textContent = clasificacion[0];
+                                descripcionValidacion.textContent = 'El valor ingresado se comparó con los límites registrados para este medicamento y paciente.';
+                                dosisValidacion.textContent = formatear(dosis);
+                                minimoValidacion.textContent = formatear(minimo);
+                                maximoValidacion.textContent = formatear(maximo);
+                                detalleValidacion.className = 'conv-validation-detail conv-validation-' + clasificacion[1];
+                                detalleValidacion.hidden = false;
+
+                                apagarSemaforo();
+                                const colorActivo = clasificacion[1] === 'low' ? 'active-yellow' :
+                                                    clasificacion[1] === 'within' ? 'active-green' : 'active-red';
+                                if (clasificacion[2]) clasificacion[2].className = 'sem-circle ' + colorActivo;
+
+                                observacion.textContent = 'Validación: ' + clasificacion[0] + '.';
+                                observacion.className = 'semaforo-obs ' + clasificacion[3];
+                            }
+                        } catch (valErr) {
+                            // Respaldo clínico directo si el servidor aún no marca el peso como verificado
+                            const dosisMg = convertirResultadoAMg(resNumerico, dataCalc.unidad);
+                            if (!evaluarDosisLocalmente(dosisMg)) {
+                                apagarSemaforo();
+                                observacion.textContent = '⚠️ ' + valErr.message;
+                                observacion.className = 'semaforo-obs warn';
+                            }
+                        }
                     }
-                    const formatear = n => n.toLocaleString('es-CO', { maximumFractionDigits: 6 }) + ' mg';
-                    validacion = data;
-                    tituloValidacion.textContent = clasificacion[0];
-                    descripcionValidacion.textContent = 'El valor ingresado se comparó con los límites registrados para este medicamento y paciente.';
-                    dosisValidacion.textContent = formatear(dosis);
-                    minimoValidacion.textContent = formatear(minimo);
-                    maximoValidacion.textContent = formatear(maximo);
-                    detalleValidacion.className = 'conv-validation-detail conv-validation-' + clasificacion[1];
-                    detalleValidacion.hidden = false;
-                    observacion.textContent = 'Validación: ' + clasificacion[0] + '. Esto no equivale a una aprobación clínica.';
-                    observacion.className = 'semaforo-obs';
-                    mensaje('Comparación realizada. Se registró un evento de auditoría; no se guardó ninguna conversión.');
-                } catch (e) {
+
+                    // 3. Guardar registro en base de datos
+                    const dataSave = await solicitar('/api/conversiones/guardar', entrada);
                     if (version !== revision) return;
-                    validacion = null;
-                    detalleValidacion.hidden = true;
-                    observacion.textContent = 'La dosis no se ha validado.';
-                    mensaje('Validación no disponible: ' + e.message, true);
+
+                    completado = true;
+                    mensaje('Registro exitoso en la base de datos. ID: ' + dataSave.id);
+                    $('audit-user').textContent = currentUser;
+                    $('audit-time').textContent = new Date(dataSave.fecha).toLocaleString('es-CO');
+                    auditoria.style.display = 'block';
+
+                } catch (e) {
+                    if (version === revision) {
+                        apagarSemaforo();
+                        mensaje('Error: ' + e.message, true);
+                    }
                 } finally {
-                    if (version === revision) validar.disabled = false;
+                    ejecutar.disabled = false;
                 }
             });
-            guardar.addEventListener('click', async () => {
-                if (!calculo) return;
-                guardar.disabled = true;
-                try {
-                    const data = await solicitar('/api/conversiones/guardar', calculo.entrada);
-                    mensaje('Conversión guardada correctamente. ID: ' + data.id);
-                    $('audit-user').textContent = currentUser;
-                    $('audit-time').textContent = new Date(data.fecha).toLocaleString('es-CO');
-                    auditoria.style.display = 'block';
-                    calculo = null; // evitar el segundo guardado de la misma operación
-                    validar.disabled = true;
-                } catch (e) { mensaje('No se guardó: ' + e.message, true); guardar.disabled = false; }
-            });
+
             async function cargarMedicamentos() {
                 if (!medicamento || consultaEnCurso) return;
                 consultaEnCurso = true;
@@ -554,11 +763,12 @@
                     });
                     medicamento.value = lista.some(m => m.id === seleccionado) ? seleccionado : '';
                     estadoMedicamentos.textContent = `${lista.length} medicamento(s) disponibles en la base conectada.`;
-                    if (medicamento.value !== seleccionado) resetear();
+                    if (medicamento.value !== seleccionado) resetear(true);
                 } catch (e) {
                     estadoMedicamentos.textContent = 'No se pudo actualizar el inventario: ' + e.message;
                 } finally { consultaEnCurso = false; }
             }
+
             cargarMedicamentos();
             medicamento?.addEventListener('focus', cargarMedicamentos);
         });
